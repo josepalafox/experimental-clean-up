@@ -1,0 +1,28 @@
+{
+  "name": "experimental-clean-up",
+  "version": "0.1.0",
+  "private": false,
+  "description": "Evidence-backed review of quiet GitHub experiments using the Cursor SDK.",
+  "type": "module",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "audit": "node --import tsx src/index.ts",
+    "profile": "AUDIT_MODE=profile node --import tsx src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@cursor/sdk": "1.0.30",
+    "ajv": "8.20.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.3.1",
+    "tsx": "4.20.5",
+    "typescript": "5.9.2",
+    "vitest": "3.2.7"
+  },
+  "license": "MIT"
+}

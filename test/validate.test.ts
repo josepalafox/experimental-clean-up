@@ -1,0 +1,41 @@
+import { describe, expect, it } from "vitest";
+import { validateModelAssessment } from "../src/validate.js";
+import type { EvidenceItem } from "../src/types.js";
+
+const evidence: EvidenceItem[] = [
+  {
+    id: "E-001",
+    signal: "prompts",
+    sourceType: "file",
+    summary: "prompt",
+    reviewUrl: "https://example.test/prompt",
+  },
+];
+
+describe("validateModelAssessment", () => {
+  it("accepts an exact requested signal with known evidence", () => {
+    const result = validateModelAssessment(
+      {
+        signal_assessments: [
+          { signal: "prompts", state: "weak", evidence_ids: ["E-001"], explanation: "Template text." },
+        ],
+      },
+      ["prompts"],
+      evidence,
+    );
+    expect(result.valid).toBe(true);
+  });
+
+  it("rejects evidence from outside the catalog", () => {
+    const result = validateModelAssessment(
+      {
+        signal_assessments: [
+          { signal: "prompts", state: "weak", evidence_ids: ["E-999"], explanation: "Template text." },
+        ],
+      },
+      ["prompts"],
+      evidence,
+    );
+    expect(result.valid).toBe(false);
+  });
+});

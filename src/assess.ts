@@ -1,0 +1,118 @@
+import { Agent, type SDKCustomTool, type SDKJsonValue } from "@cursor/sdk";
+import { Ajv } from "ajv";
+import { assessmentSchema, evidenceRequestSchema, evidenceResponseSchema } from "./schemas.js";
+import type { ModelAssessment, RepositoryProfile, Signal } from "./types.js";
+import { buildAssessmentPrompt } from "./prompt.js";
+import { validateModelAssessment } from "./validate.js";
+
+const MAX_ATTEMPTS = 2;
+
+export interface AssessmentOutcome {
+  assessment: ModelAssessment;
+  attempts: number;
+}
+
+export async function assessProfile(
+  profile: RepositoryProfile,
+  cursorApiKey: string,
+  cursorModel: string,
+  requestedSignals: Signal[],
+): Promise<AssessmentOutcome> {
+  if (requestedSignals.length === 0) {
+    return { assessment: { signal_assessments: [] }, attempts: 0 };
+  }
+
+  const evidenceById = new Map(profile.evidence.map((item) => [item.id, item]));
+  const ajv = new Ajv({ allErrors: true });
+  const validateRequest = ajv.compile(evidenceRequestSchema);
+  let accepted: ModelAssessment | undefined;
+  let latestErrors: string[] = [];
+
+  const customTools: Record<string, SDKCustomTool> = {
+    request_evidence: {
+      description: "Retrieve full, pre-collected evidence items by identifier. This tool has no network access.",
+      inputSchema: evidenceRequestSchema as unknown as Record<string, SDKJsonValue>,
+      outputSchema: evidenceResponseSchema as unknown as Record<string, SDKJsonValue>,
+      execute(args) {
+        if (!validateRequest(args)) {
+          return {
+            content: [{ type: "text", text: `Invalid evidence request: ${ajv.errorsText(validateRequest.errors)}` }],
+            isError: true,
+          };
+        }
+        const ids = args.evidence_ids as string[];
+        const missing = ids.filter((id) => !evidenceById.has(id));
+        if (missing.length > 0) {
+          return {
+            content: [{ type: "text", text: `Unknown evidence identifiers: ${missing.join(", ")}` }],
+            isError: true,
+          };
+        }
+        return {
+          items: ids.map((id) => {
+            const item = evidenceById.get(id)!;
+            return {
+              id: item.id,
+              signal: item.signal,
+              source_type: item.sourceType,
+              ...(item.path ? { path: item.path } : {}),
+              summary: item.summary,
+              ...(item.content ? { content: item.content } : {}),
+              review_url: item.reviewUrl,
+            };
+          }),
+        };
+      },
+    },
+    submit_assessment: {
+      description: "Submit the complete structured assessment. This is the only accepted completion path.",
+      inputSchema: assessmentSchema as unknown as Record<string, SDKJsonValue>,
+      execute(args) {
+        const validation = validateModelAssessment(args, requestedSignals, profile.evidence);
+        if (!validation.valid || !validation.assessment) {
+          latestErrors = validation.errors;
+          return {
+            content: [{ type: "text", text: `Assessment rejected:\n${validation.errors.join("\n")}` }],
+            isError: true,
+          };
+        }
+        accepted = validation.assessment;
+        latestErrors = [];
+        return { accepted: true, message: "Assessment validated." };
+      },
+    },
+  };
+
+  const agent = await Agent.create({
+    apiKey: cursorApiKey,
+    model: { id: cursorModel },
+    tools: ["mcp"],
+    local: {
+      cwd: process.cwd(),
+      settingSources: [],
+      customTools,
+      sandboxOptions: { enabled: true },
+    },
+  });
+
+  try {
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
+      const prompt =
+        attempt === 1
+          ? buildAssessmentPrompt(profile, requestedSignals)
+          : `The previous run did not produce an accepted submit_assessment call. Correct these errors and call submit_assessment now:\n${latestErrors.length ? latestErrors.join("\n") : "No valid structured submission was received."}`;
+      const run = await agent.send(prompt, {
+        idempotencyKey: `${profile.repository.id}-${profile.commitSha}-${attempt}`,
+      });
+      const result = await run.wait();
+      if (accepted) return { assessment: accepted, attempts: attempt };
+      if (result.status === "error") {
+        latestErrors = [result.error?.message ?? "Cursor SDK run failed"];
+      }
+    }
+  } finally {
+    agent.close();
+  }
+
+  throw new Error(`No valid assessment after ${MAX_ATTEMPTS} attempts: ${latestErrors.join("; ")}`);
+}

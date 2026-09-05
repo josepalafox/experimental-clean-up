@@ -1,0 +1,64 @@
+name: Experimental cleanup audit
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Run deterministic profiling or the full Cursor assessment
+        required: true
+        default: profile
+        type: choice
+        options:
+          - profile
+          - assess
+      max_assessments:
+        description: Maximum candidates sent for assessment
+        required: true
+        default: "10"
+        type: string
+      create_tracking_issue:
+        description: Create or update the central cleanup-review issue
+        required: true
+        default: false
+        type: boolean
+  # Schedule adaptation point:
+  # schedule:
+  #   - cron: "0 15 * * 1"
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      AUDIT_MODE: ${{ inputs.mode }}
+      MAX_ASSESSMENTS: ${{ inputs.max_assessments }}
+      CREATE_TRACKING_ISSUE: ${{ inputs.create_tracking_issue }}
+      CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+      GH_AUDIT_TOKEN: ${{ secrets.GH_AUDIT_TOKEN }}
+      GITHUB_TOKEN: ${{ github.token }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.13"
+          cache: npm
+
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - run: npm run audit
+
+      - name: Upload evidence package
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: experimental-cleanup-report
+          path: reports/
+          if-no-files-found: warn
+          retention-days: 7
