@@ -1,5 +1,6 @@
 import type { AuditSummary, FinalResult, RepositoryProfile } from "./types.js";
 
+// Callout: Profile output makes the candidate population visible before model assessment.
 export function renderProfileSummary(profiles: RepositoryProfile[], enumerated: number): string {
   const lines = [
     "# Experimental cleanup profile",
@@ -20,6 +21,7 @@ export function renderProfileSummary(profiles: RepositoryProfile[], enumerated: 
   return `${lines.join("\n")}\n`;
 }
 
+// Callout: Every surfaced judgment links back to the exact evidence a reviewer can inspect.
 function renderResult(result: FinalResult): string[] {
   const lines = [
     `## [${result.repository.fullName}](${result.repository.htmlUrl})`,
@@ -43,6 +45,7 @@ function renderResult(result: FinalResult): string[] {
   return lines;
 }
 
+// Callout: The report explicitly presents candidates for review, never deletion decisions.
 export function renderAuditReport(summary: AuditSummary): string {
   const surfaced = summary.results.filter((result) => result.category !== "not_surfaced");
   const lines = [

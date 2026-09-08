@@ -1,3 +1,4 @@
+// Callout: Defense-in-depth redaction covers common credentials before model assessment.
 const SECRET_PATTERNS: Array<[RegExp, string]> = [
   [/\bgh[pousr]_[A-Za-z0-9]{20,}\b/g, "[REDACTED_GITHUB_TOKEN]"],
   [/\bgithub_pat_[A-Za-z0-9_]{20,}\b/g, "[REDACTED_GITHUB_TOKEN]"],

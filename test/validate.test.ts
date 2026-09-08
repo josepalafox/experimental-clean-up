@@ -12,6 +12,7 @@ const evidence: EvidenceItem[] = [
   },
 ];
 
+// Callout: These tests prove that valid evidence passes and invented evidence is rejected.
 describe("validateModelAssessment", () => {
   it("accepts an exact requested signal with known evidence", () => {
     const result = validateModelAssessment(

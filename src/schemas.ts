@@ -2,6 +2,7 @@ import type { JSONSchemaType } from "ajv";
 import type { ModelAssessment } from "./types.js";
 import { SIGNALS, SIGNAL_STATES } from "./types.js";
 
+// Callout: This JSON Schema constrains the model to known fields, signals, states, and evidence IDs.
 export const assessmentSchema: JSONSchemaType<ModelAssessment> = {
   type: "object",
   additionalProperties: false,
@@ -32,6 +33,7 @@ export const assessmentSchema: JSONSchemaType<ModelAssessment> = {
   },
 };
 
+// Callout: The agent can request only a bounded list of pre-existing evidence identifiers.
 export const evidenceRequestSchema = {
   type: "object",
   additionalProperties: false,
@@ -47,6 +49,7 @@ export const evidenceRequestSchema = {
   },
 } as const;
 
+// Callout: This contract keeps evidence-tool responses predictable for the SDK agent.
 export const evidenceResponseSchema = {
   type: "object",
   additionalProperties: false,

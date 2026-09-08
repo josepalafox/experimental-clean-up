@@ -5,6 +5,7 @@ import type { ModelAssessment, RepositoryProfile, Signal } from "./types.js";
 import { buildAssessmentPrompt } from "./prompt.js";
 import { validateModelAssessment } from "./validate.js";
 
+// Callout: One repair attempt makes invalid structured output recoverable without an open-ended loop.
 const MAX_ATTEMPTS = 2;
 
 export interface AssessmentOutcome {
@@ -22,12 +23,14 @@ export async function assessProfile(
     return { assessment: { signal_assessments: [] }, attempts: 0 };
   }
 
+  // Callout: Both tools close over this local evidence bundle and need no GitHub access.
   const evidenceById = new Map(profile.evidence.map((item) => [item.id, item]));
   const ajv = new Ajv({ allErrors: true });
   const validateRequest = ajv.compile(evidenceRequestSchema);
   let accepted: ModelAssessment | undefined;
   let latestErrors: string[] = [];
 
+  // Callout: These two custom tools are the agent's complete capability surface.
   const customTools: Record<string, SDKCustomTool> = {
     request_evidence: {
       description: "Retrieve full, pre-collected evidence items by identifier. This tool has no network access.",
@@ -64,6 +67,7 @@ export async function assessProfile(
         };
       },
     },
+    // Callout: This tool enforces the JSON Schema and is the only accepted completion path.
     submit_assessment: {
       description: "Submit the complete structured assessment. This is the only accepted completion path.",
       inputSchema: assessmentSchema as unknown as Record<string, SDKJsonValue>,
@@ -83,12 +87,15 @@ export async function assessProfile(
     },
   };
 
+  // Callout: This is where the application starts the Cursor SDK agent.
   const agent = await Agent.create({
     apiKey: cursorApiKey,
     model: { id: cursorModel },
+    // Callout: MCP enables only the custom tools; shell, browser, file, edit, and subagent tools are omitted.
     tools: ["mcp"],
     local: {
       cwd: process.cwd(),
+      // Callout: Empty setting sources prevent user or project configuration from adding capabilities.
       settingSources: [],
       customTools,
       sandboxOptions: { enabled: true },
@@ -96,12 +103,14 @@ export async function assessProfile(
   });
 
   try {
+    // Callout: Validation errors are returned to the same agent for one bounded repair attempt.
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
       const prompt =
         attempt === 1
           ? buildAssessmentPrompt(profile, requestedSignals)
           : `The previous run did not produce an accepted submit_assessment call. Correct these errors and call submit_assessment now:\n${latestErrors.length ? latestErrors.join("\n") : "No valid structured submission was received."}`;
       const run = await agent.send(prompt, {
+        // Callout: The key makes each repository, commit, and attempt safe to retry.
         idempotencyKey: `${profile.repository.id}-${profile.commitSha}-${attempt}`,
       });
       const result = await run.wait();

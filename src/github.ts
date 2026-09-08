@@ -110,6 +110,7 @@ export class GitHubClient {
     init: RequestInit = {},
     tokenOverride?: string,
   ): Promise<T> {
+    // Callout: A hard request budget prevents an enterprise scan from exhausting GitHub capacity.
     if (this.requestCount >= this.maxRequests) {
       throw new GitHubApiError(`GitHub request budget of ${this.maxRequests} exhausted`, 429, path);
     }
@@ -151,6 +152,7 @@ export class GitHubClient {
     return collected;
   }
 
+  // Callout: The demo enumerates only public, owned, active, non-fork repositories.
   async listOwnedPublicRepositories(owner: string, excludedRepository: string): Promise<RepositoryRef[]> {
     const repositories = await this.paginate<GitHubRepository>(
       `/users/${encodeURIComponent(owner)}/repos?type=owner&sort=full_name&direction=asc`,
@@ -193,6 +195,7 @@ export class GitHubClient {
     repo: RepositoryRef,
     primaryContributor: string | null,
   ): Promise<{ events: ActivityEvent[]; unavailableSources: string[]; commitSha: string }> {
+    // Callout: Human activity drives the 14-day gate; automated maintenance does not reset it.
     const unavailableSources: string[] = [];
     const events: ActivityEvent[] = [];
     const commits = await this.request<GitHubCommit[]>(`/repos/${repo.fullName}/commits?per_page=100`);
@@ -291,6 +294,7 @@ export class GitHubClient {
     return { events, unavailableSources, commitSha: head.sha };
   }
 
+  // Callout: The tree and all file contents are read from one pinned commit.
   async getTree(repo: RepositoryRef, commitSha: string): Promise<GitTreeResponse> {
     return this.request<GitTreeResponse>(
       `/repos/${repo.fullName}/git/trees/${encodeURIComponent(commitSha)}?recursive=1`,
@@ -305,6 +309,7 @@ export class GitHubClient {
     if (file.type !== "file" || file.encoding !== "base64") {
       throw new GitHubApiError(`Unsupported content response for ${path}`, 422, path);
     }
+    // Callout: Secret-like values are removed before repository text enters the evidence bundle.
     return redactSecrets(Buffer.from(file.content.replace(/\n/g, ""), "base64").toString("utf8"));
   }
 
@@ -315,6 +320,7 @@ export class GitHubClient {
     return response.workflow_runs;
   }
 
+  // Callout: This isolated method is the only GitHub write path in the application.
   async upsertTrackingIssue(
     owner: string,
     repository: string,
@@ -364,6 +370,7 @@ export class GitHubClient {
   }
 }
 
+// Callout: Bot detection prevents automated commits from making an abandoned project look maintained.
 export function isBot(actor: { login?: string; type?: string } | null): boolean {
   if (!actor) return false;
   return actor.type === "Bot" || /\[bot\]$/i.test(actor.login ?? "") || /^(dependabot|renovate)$/i.test(actor.login ?? "");
@@ -373,6 +380,7 @@ function sameLogin(first: string, second: string): boolean {
   return first.toLowerCase() === second.toLowerCase();
 }
 
+// Callout: Deterministic path rules decide which files can support each stewardship signal.
 export function fileSignals(path: string): Signal[] {
   const normalized = path.toLowerCase();
   const basename = normalized.split("/").at(-1) ?? normalized;

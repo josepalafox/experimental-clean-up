@@ -1,3 +1,4 @@
+// Callout: These five values are the complete MVP assessment vocabulary.
 export const SIGNALS = [
   "prompts",
   "skill_or_spec",
@@ -10,6 +11,7 @@ export type Signal = (typeof SIGNALS)[number];
 export const SIGNAL_STATES = ["substantive", "weak", "absent", "unclear"] as const;
 export type SignalState = (typeof SIGNAL_STATES)[number];
 
+// Callout: Categories recommend human follow-up; none authorizes deletion.
 export type Category =
   | "review_for_retirement"
   | "further_investigation"
@@ -71,6 +73,7 @@ export interface SignalInventory {
   evidenceIds: string[];
 }
 
+// Callout: The profile is the deterministic handoff contract into model assessment.
 export interface RepositoryProfile {
   repository: RepositoryRef;
   commitSha: string;
@@ -88,6 +91,7 @@ export interface SignalAssessment {
   explanation: string;
 }
 
+// Callout: The model returns only bounded signal assessments, not policy or free-form findings.
 export interface ModelAssessment {
   signal_assessments: SignalAssessment[];
 }
@@ -96,6 +100,7 @@ export interface FinalSignal extends SignalAssessment {
   decided_by: "profiler" | "model" | "validation_override";
 }
 
+// Callout: The final result records provenance for every decision and evidence reference.
 export interface FinalResult {
   repository: RepositoryRef;
   commitSha: string;

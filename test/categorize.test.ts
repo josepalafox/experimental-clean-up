@@ -13,6 +13,7 @@ function signals(states: SignalState[]): FinalSignal[] {
   }));
 }
 
+// Callout: These tests lock the deterministic policy thresholds and safe uncertainty behavior.
 describe("categoryForSignals", () => {
   it("surfaces four weak or absent signals for retirement review", () => {
     expect(categoryForSignals(signals(["weak", "absent", "weak", "absent", "substantive"])).category)

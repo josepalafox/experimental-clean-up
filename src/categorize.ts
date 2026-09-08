@@ -8,6 +8,7 @@ import type {
 import { SIGNALS } from "./types.js";
 import { validateFinalSignalSet } from "./validate.js";
 
+// Callout: Policy stays in deterministic code rather than being delegated to the model.
 export function categoryForSignals(signals: FinalSignal[]): {
   category: Category;
   weakOrAbsentCount: number;
@@ -31,6 +32,7 @@ export function categoryForSignals(signals: FinalSignal[]): {
   return { category: "not_surfaced", weakOrAbsentCount, reasonCodes: ["durable_stewardship_evidence"] };
 }
 
+// Callout: This merges deterministic absence, model judgment, and validation overrides.
 export function buildFinalResult(
   profile: RepositoryProfile,
   modelAssessment: ModelAssessment,
@@ -49,6 +51,7 @@ export function buildFinalResult(
         decided_by: "profiler",
       };
     }
+    // Callout: Missing proof fails safely to investigation instead of becoming a false absence.
     if (inventory.searchStatus === "incomplete") {
       return {
         signal,
@@ -65,6 +68,7 @@ export function buildFinalResult(
 
   const finalErrors = validateFinalSignalSet(signals);
   if (finalErrors.length > 0) throw new Error(finalErrors.join("; "));
+  // Callout: Categorization happens only after the complete five-signal package validates.
   const category = categoryForSignals(signals);
   return {
     repository: profile.repository,
