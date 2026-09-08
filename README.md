@@ -20,7 +20,7 @@ The agent has no shell, edit, browser, or GitHub tool. Repository text is treate
 
 ## Run locally
 
-Requires Node.js 22.13 or newer.
+Requires Node.js 24 or newer.
 
 ```bash
 npm install

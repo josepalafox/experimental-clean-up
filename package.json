@@ -5,7 +5,7 @@
   "description": "Evidence-backed review of quiet GitHub experiments using the Cursor SDK.",
   "type": "module",
   "engines": {
-    "node": ">=22.13.0"
+    "node": ">=24.0.0"
   },
   "scripts": {
     "audit": "node --import tsx src/index.ts",
