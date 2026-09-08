@@ -31,7 +31,6 @@ Profiling does not use Cursor and writes `reports/latest.md` plus the collected 
 
 ```bash
 export CURSOR_API_KEY="..."
-export GH_AUDIT_TOKEN="..." # optional; increases GitHub API capacity
 AUDIT_MODE=assess npm run audit
 ```
 
@@ -47,7 +46,7 @@ Useful settings:
 
 ## GitHub Actions
 
-The workflow is manually triggered. Add `CURSOR_API_KEY` as a repository secret before choosing `assess`. `GH_AUDIT_TOKEN` is optional and can provide higher public API throughput. The workflow's built-in token is used only when creating the central issue.
+The workflow is manually triggered. Add `CURSOR_API_KEY` as a repository secret before choosing `assess`. GitHub automatically supplies the workflow token used for public repository reads and the optional central issue; no separate GitHub secret is required.
 
 The checked-in schedule is intentionally commented out. It can be enabled after the signal quality and operating cost are understood.
 

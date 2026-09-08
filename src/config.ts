@@ -25,8 +25,7 @@ export interface Config {
   auditMode: "profile" | "assess";
   cursorApiKey?: string;
   cursorModel: string;
-  githubReadToken?: string;
-  githubWriteToken?: string;
+  githubToken?: string;
   createTrackingIssue: boolean;
 }
 
@@ -48,12 +47,7 @@ export function loadConfig(): Config {
     auditMode,
     ...(cursorApiKey ? { cursorApiKey } : {}),
     cursorModel: process.env.CURSOR_MODEL ?? "auto",
-    ...(process.env.GH_AUDIT_TOKEN
-      ? { githubReadToken: process.env.GH_AUDIT_TOKEN }
-      : process.env.GITHUB_TOKEN
-        ? { githubReadToken: process.env.GITHUB_TOKEN }
-        : {}),
-    ...(process.env.GITHUB_TOKEN ? { githubWriteToken: process.env.GITHUB_TOKEN } : {}),
+    ...(process.env.GITHUB_TOKEN ? { githubToken: process.env.GITHUB_TOKEN } : {}),
     createTrackingIssue: process.env.CREATE_TRACKING_ISSUE === "true",
   };
 }

@@ -11,7 +11,7 @@ import { unresolvedSignals } from "./validate.js";
 // Callout: This is the application entry point for both local and GitHub Actions runs.
 async function main(): Promise<void> {
   const config = loadConfig();
-  const client = new GitHubClient(config.githubReadToken, config.maxRequests);
+  const client = new GitHubClient(config.githubToken, config.maxRequests);
   // Callout: Repository discovery is deterministic; the agent is not involved.
   const repositories = await client.listOwnedPublicRepositories(config.owner, config.utilityRepository);
   const profiles: RepositoryProfile[] = [];
@@ -82,13 +82,13 @@ async function main(): Promise<void> {
 
   // Callout: This is the only optional GitHub write, and it targets the utility repository.
   if (config.createTrackingIssue) {
-    if (!config.githubWriteToken) throw new Error("GITHUB_TOKEN is required to create the tracking issue");
+    if (!config.githubToken) throw new Error("GITHUB_TOKEN is required to create the tracking issue");
     const url = await client.upsertTrackingIssue(
       config.owner,
       config.utilityRepository,
       "Experimental cleanup review",
       report,
-      config.githubWriteToken,
+      config.githubToken,
     );
     console.log(`Tracking issue: ${url}`);
   }

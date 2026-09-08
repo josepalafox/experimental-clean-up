@@ -40,7 +40,7 @@ jobs:
       MAX_ASSESSMENTS: ${{ inputs.max_assessments }}
       CREATE_TRACKING_ISSUE: ${{ inputs.create_tracking_issue }}
       CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
-      GH_AUDIT_TOKEN: ${{ secrets.GH_AUDIT_TOKEN }}
+      # Callout: GitHub supplies this token automatically for the current workflow run.
       GITHUB_TOKEN: ${{ github.token }}
 
     steps:
