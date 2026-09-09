@@ -1,4 +1,6 @@
-import type { RepositoryProfile, Signal } from "./types.js";
+import type { RepositoryProfile, Signal } from "./domain-types.js";
+
+// Supporting file: defines the agent's task, evidence boundary, and completion instructions.
 
 // Callout: These definitions turn subjective architectural intent into four bounded states.
 const SIGNAL_DEFINITIONS = `

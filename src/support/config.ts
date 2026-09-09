@@ -1,3 +1,4 @@
+// Supporting file: centralizes scope, credentials, and per-run safety limits.
 const DEMO_OWNER = "josepalafox";
 
 // Callout: This hard boundary keeps the demo inside one public namespace.

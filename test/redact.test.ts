@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { containsSecretLikeValue, redactSecrets } from "../src/redact.js";
+import { containsSecretLikeValue, redactSecrets } from "../src/support/redact-secrets.js";
 
 // Callout: This test proves secret-like values are removed before evidence leaves collection.
 describe("redactSecrets", () => {

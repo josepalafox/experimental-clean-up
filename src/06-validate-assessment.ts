@@ -1,7 +1,9 @@
 import { Ajv, type ErrorObject, type ValidateFunction } from "ajv";
-import { assessmentSchema } from "./schemas.js";
-import type { EvidenceItem, ModelAssessment, RepositoryProfile, Signal } from "./types.js";
-import { SIGNALS } from "./types.js";
+import { assessmentSchema } from "./support/assessment-schema.js";
+import type { EvidenceItem, ModelAssessment, RepositoryProfile, Signal } from "./support/domain-types.js";
+import { SIGNALS } from "./support/domain-types.js";
+
+// Step 06: Validates model structure, evidence references, and signal completeness.
 
 // Callout: Application-side validation independently checks the schema supplied to the agent tool.
 const ajv = new Ajv({ allErrors: true });

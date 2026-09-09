@@ -1,4 +1,6 @@
-import type { AuditSummary, FinalResult, RepositoryProfile } from "./types.js";
+import type { AuditSummary, FinalResult, RepositoryProfile } from "./support/domain-types.js";
+
+// Step 08: Renders the final human-readable and machine-readable evidence package.
 
 // Callout: Profile output makes the candidate population visible before model assessment.
 export function renderProfileSummary(profiles: RepositoryProfile[], enumerated: number): string {

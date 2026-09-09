@@ -1,3 +1,4 @@
+// Supporting file: defines the shared vocabulary passed between every stage.
 // Callout: These five values are the complete MVP assessment vocabulary.
 export const SIGNALS = [
   "prompts",

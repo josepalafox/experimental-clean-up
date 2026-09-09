@@ -4,9 +4,11 @@ import type {
   FinalSignal,
   ModelAssessment,
   RepositoryProfile,
-} from "./types.js";
-import { SIGNALS } from "./types.js";
-import { validateFinalSignalSet } from "./validate.js";
+} from "./support/domain-types.js";
+import { SIGNALS } from "./support/domain-types.js";
+import { validateFinalSignalSet } from "./06-validate-assessment.js";
+
+// Step 07: Applies deterministic policy after all five signals are resolved.
 
 // Callout: Policy stays in deterministic code rather than being delegated to the model.
 export function categoryForSignals(signals: FinalSignal[]): {

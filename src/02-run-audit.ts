@@ -1,12 +1,15 @@
 import { mkdir, writeFile, appendFile } from "node:fs/promises";
-import { assessProfile } from "./assess.js";
-import { buildFinalResult } from "./categorize.js";
-import { loadConfig } from "./config.js";
-import { GitHubClient } from "./github.js";
-import { buildRepositoryProfile, selectCandidate } from "./profile.js";
-import { renderAuditReport, renderProfileSummary } from "./report.js";
-import type { AuditSummary, RepositoryProfile } from "./types.js";
-import { unresolvedSignals } from "./validate.js";
+import { selectCandidate } from "./03-select-candidates.js";
+import { buildRepositoryProfile } from "./04-collect-evidence.js";
+import { assessProfile } from "./05-assess-with-cursor.js";
+import { unresolvedSignals } from "./06-validate-assessment.js";
+import { buildFinalResult } from "./07-categorize-results.js";
+import { renderAuditReport, renderProfileSummary } from "./08-render-report.js";
+import { loadConfig } from "./support/config.js";
+import { GitHubClient } from "./support/github-client.js";
+import type { AuditSummary, RepositoryProfile } from "./support/domain-types.js";
+
+// Step 02: Orchestrates the complete path from repository discovery to output.
 
 // Callout: This is the application entry point for both local and GitHub Actions runs.
 async function main(): Promise<void> {

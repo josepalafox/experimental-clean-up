@@ -1,5 +1,7 @@
 name: Experimental cleanup audit
 
+# Step 01: GitHub Actions trigger, permissions, runtime, and artifact publication.
+
 on:
   # Callout: This manual trigger starts the utility and keeps the MVP operator-controlled.
   workflow_dispatch:

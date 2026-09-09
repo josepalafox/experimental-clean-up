@@ -1,9 +1,11 @@
 import { Agent, type SDKCustomTool, type SDKJsonValue } from "@cursor/sdk";
 import { Ajv } from "ajv";
-import { assessmentSchema, evidenceRequestSchema, evidenceResponseSchema } from "./schemas.js";
-import type { ModelAssessment, RepositoryProfile, Signal } from "./types.js";
-import { buildAssessmentPrompt } from "./prompt.js";
-import { validateModelAssessment } from "./validate.js";
+import { validateModelAssessment } from "./06-validate-assessment.js";
+import { assessmentSchema, evidenceRequestSchema, evidenceResponseSchema } from "./support/assessment-schema.js";
+import { buildAssessmentPrompt } from "./support/assessment-prompt.js";
+import type { ModelAssessment, RepositoryProfile, Signal } from "./support/domain-types.js";
+
+// Step 05: Runs the bounded Cursor SDK assessment and repair loop.
 
 // Callout: One repair attempt makes invalid structured output recoverable without an open-ended loop.
 const MAX_ATTEMPTS = 2;

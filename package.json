@@ -8,8 +8,8 @@
     "node": ">=24.0.0"
   },
   "scripts": {
-    "audit": "node --import tsx src/index.ts",
-    "profile": "AUDIT_MODE=profile node --import tsx src/index.ts",
+    "audit": "node --import tsx src/02-run-audit.ts",
+    "profile": "AUDIT_MODE=profile node --import tsx src/02-run-audit.ts",
     "build": "tsc -p tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest"

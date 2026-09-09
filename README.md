@@ -18,6 +18,21 @@ The output is an evidence-linked review list. It is not a deletion decision, and
 
 The agent has no shell, edit, browser, or GitHub tool. Repository text is treated as untrusted evidence. GitHub reads and the optional central issue write are performed by deterministic application code.
 
+## Code tour
+
+The numbered files follow the path from trigger to output:
+
+1. `.github/workflows/01-audit-trigger.yml` starts the utility and defines its permissions.
+2. `src/02-run-audit.ts` coordinates one complete run.
+3. `src/03-select-candidates.ts` applies the 14-day human-inactivity gate.
+4. `src/04-collect-evidence.ts` builds the local evidence bundle.
+5. `src/05-assess-with-cursor.ts` starts the Cursor SDK agent and handles evidence requests or a retry.
+6. `src/06-validate-assessment.ts` validates the agent's schema-constrained response.
+7. `src/07-categorize-results.ts` applies the deterministic category policy.
+8. `src/08-render-report.ts` produces the Markdown, JSON, and optional tracking issue output.
+
+Shared configuration, schemas, prompts, types, GitHub access, and redaction helpers live in `src/support/` so the main demo path stays easy to follow.
+
 ## Run locally
 
 Requires Node.js 24 or newer.

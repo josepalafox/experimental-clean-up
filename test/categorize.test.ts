@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { buildFinalResult, categoryForSignals } from "../src/categorize.js";
-import type { FinalSignal, SignalState } from "../src/types.js";
-import { SIGNALS } from "../src/types.js";
+import { buildFinalResult, categoryForSignals } from "../src/07-categorize-results.js";
+import type { FinalSignal, SignalState } from "../src/support/domain-types.js";
+import { SIGNALS } from "../src/support/domain-types.js";
 
 function signals(states: SignalState[]): FinalSignal[] {
   return SIGNALS.map((signal, index) => ({

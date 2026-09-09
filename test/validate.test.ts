@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { validateModelAssessment } from "../src/validate.js";
-import type { EvidenceItem } from "../src/types.js";
+import { validateModelAssessment } from "../src/06-validate-assessment.js";
+import type { EvidenceItem } from "../src/support/domain-types.js";
 
 const evidence: EvidenceItem[] = [
   {

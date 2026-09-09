@@ -1,5 +1,7 @@
-import type { ActivityEvent, EvidenceItem, RepositoryRef, Signal } from "./types.js";
-import { redactSecrets } from "./redact.js";
+import type { ActivityEvent, EvidenceItem, RepositoryRef, Signal } from "./domain-types.js";
+import { redactSecrets } from "./redact-secrets.js";
+
+// Supporting file: contains every GitHub API read and the isolated central-issue write.
 
 const API_ROOT = "https://api.github.com";
 const USER_AGENT = "experimental-clean-up/0.1";

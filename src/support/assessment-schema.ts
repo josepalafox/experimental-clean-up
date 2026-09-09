@@ -1,6 +1,8 @@
 import type { JSONSchemaType } from "ajv";
-import type { ModelAssessment } from "./types.js";
-import { SIGNALS, SIGNAL_STATES } from "./types.js";
+import type { ModelAssessment } from "./domain-types.js";
+import { SIGNALS, SIGNAL_STATES } from "./domain-types.js";
+
+// Supporting file: defines the machine-checkable contracts used by the agent tools.
 
 // Callout: This JSON Schema constrains the model to known fields, signals, states, and evidence IDs.
 export const assessmentSchema: JSONSchemaType<ModelAssessment> = {

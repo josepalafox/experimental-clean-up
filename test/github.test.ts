@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fileSignals, isBot } from "../src/github.js";
+import { fileSignals, isBot } from "../src/support/github-client.js";
 
 // Callout: These tests protect the deterministic mapping from repository files to signals.
 describe("fileSignals", () => {

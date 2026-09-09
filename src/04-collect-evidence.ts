@@ -1,4 +1,4 @@
-import { GitHubClient, evidenceForFile, fileSignals } from "./github.js";
+import { GitHubClient, evidenceForFile, fileSignals } from "./support/github-client.js";
 import type {
   CandidateSelection,
   EvidenceItem,
@@ -6,50 +6,14 @@ import type {
   RepositoryRef,
   Signal,
   SignalInventory,
-} from "./types.js";
-import { SIGNALS } from "./types.js";
+} from "./support/domain-types.js";
+import { SIGNALS } from "./support/domain-types.js";
+
+// Step 04: Builds the complete evidence boundary before the agent starts.
 
 const MAX_FILES_PER_SIGNAL = 8;
 const MAX_FILE_BYTES = 100_000;
 
-// Callout: This inexpensive deterministic gate protects model cost.
-export async function selectCandidate(
-  client: GitHubClient,
-  repository: RepositoryRef,
-  thresholdDays: number,
-): Promise<{ selection: CandidateSelection; commitSha: string }> {
-  let primaryContributor: string | null = null;
-  const unavailableSources: string[] = [];
-  try {
-    primaryContributor = await client.getPrimaryContributor(repository);
-  } catch {
-    unavailableSources.push("contributors");
-  }
-
-  const activity = await client.collectHumanActivity(repository, primaryContributor);
-  unavailableSources.push(...activity.unavailableSources);
-  const lastHumanActivity = activity.events.sort(
-    (left, right) => Date.parse(right.occurredAt) - Date.parse(left.occurredAt),
-  )[0] ?? null;
-  const inactiveDays = lastHumanActivity
-    ? Math.floor((Date.now() - Date.parse(lastHumanActivity.occurredAt)) / 86_400_000)
-    : null;
-
-  // Callout: Unknown human activity is selected for review instead of being treated as active.
-  return {
-    commitSha: activity.commitSha,
-    selection: {
-      thresholdDays,
-      primaryContributor,
-      lastHumanActivity,
-      inactiveDays,
-      selected: inactiveDays === null || inactiveDays >= thresholdDays,
-      unavailableSources: [...new Set(unavailableSources)].sort(),
-    },
-  };
-}
-
-// Callout: This stage builds the complete evidence boundary before the agent starts.
 export async function buildRepositoryProfile(
   client: GitHubClient,
   repository: RepositoryRef,
