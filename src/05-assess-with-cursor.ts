@@ -100,7 +100,6 @@ export async function assessProfile(
       // Callout: Empty setting sources prevent user or project configuration from adding capabilities.
       settingSources: [],
       customTools,
-      sandboxOptions: { enabled: true },
     },
   });
 

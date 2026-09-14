@@ -11,7 +11,9 @@ import type { AuditSummary, RepositoryProfile } from "./support/domain-types.js"
 
 // Step 02: Orchestrates the complete path from repository discovery to output.
 
-// Callout: This is the application entry point for both local and GitHub Actions runs.
+// Callout: Local and GitHub Actions runs enter through main(). "profile" measures scope
+// and collects evidence without model cost; "assess" continues through the full evaluation.
+// Larger deployments would add rate-limit-aware batching around this same entry point.
 async function main(): Promise<void> {
   const config = loadConfig();
   const client = new GitHubClient(config.githubToken, config.maxRequests);
@@ -21,13 +23,15 @@ async function main(): Promise<void> {
   const errors: AuditSummary["errors"] = [];
 
   for (const repository of repositories) {
-    // Callout: Defense in depth prevents the run from crossing the configured owner boundary.
+    // Demo scope: require repositories to belong to the configured personal namespace;
+    // an organization or enterprise deployment would replace this ownership boundary.
     if (repository.owner.toLowerCase() !== config.owner.toLowerCase()) {
       throw new Error(`Owner boundary violation: ${repository.fullName}`);
     }
     try {
-      // Callout: Only repositories that pass the human-inactivity gate receive deeper collection.
+      // Callout: Filter for 14 days of human inactivity; Step 03 calculates the result.
       const { selection, commitSha } = await selectCandidate(client, repository, config.inactivityDays);
+      // Active repositories stop here; selected repositories continue to evidence collection.
       if (!selection.selected) continue;
       profiles.push(await buildRepositoryProfile(client, repository, selection, commitSha));
     } catch (error) {
