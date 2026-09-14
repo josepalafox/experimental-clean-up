@@ -14,6 +14,21 @@ import { SIGNALS } from "./support/domain-types.js";
 const MAX_FILES_PER_SIGNAL = 8;
 const MAX_FILE_BYTES = 100_000;
 
+const ABSENCE_SEARCHES: Record<Signal, string> = {
+  prompts: ".github/prompts/**",
+  skill_or_spec: ".github/{skills,agents,instructions}/** and named specification files",
+  ci: ".github/workflows/*.yml or .yaml",
+  ownership: "CODEOWNERS, README.md, or SECURITY.md",
+  onboarding: "README.md or repository-level setup and install files",
+};
+
+function absenceReviewUrl(repository: RepositoryRef, commitSha: string, signal: Signal, hasGitHubDirectory: boolean): string {
+  const usesGitHubDirectory = ["prompts", "skill_or_spec", "ci"].includes(signal);
+  return usesGitHubDirectory && hasGitHubDirectory
+    ? `${repository.htmlUrl}/tree/${commitSha}/.github`
+    : `${repository.htmlUrl}/tree/${commitSha}`;
+}
+
 export async function buildRepositoryProfile(
   client: GitHubClient,
   repository: RepositoryRef,
@@ -22,6 +37,7 @@ export async function buildRepositoryProfile(
 ): Promise<RepositoryProfile> {
   const tree = await client.getTree(repository, commitSha);
   const blobs = tree.tree.filter((item) => item.type === "blob");
+  const hasGitHubDirectory = tree.tree.some((item) => item.path.startsWith(".github/"));
   const pathsBySignal = new Map<Signal, string[]>(SIGNALS.map((signal) => [signal, []]));
 
   for (const item of blobs) {
@@ -59,8 +75,8 @@ export async function buildRepositoryProfile(
         signal,
         sourceType: "repository_tree",
         commitSha,
-        summary: `${tree.truncated ? "Incomplete" : "Complete"} tree search found no files matching the ${signal} signal`,
-        reviewUrl: `${repository.htmlUrl}/tree/${commitSha}`,
+        summary: `${tree.truncated ? "Incomplete" : "Complete"} repository-tree search found no paths matching ${ABSENCE_SEARCHES[signal]}`,
+        reviewUrl: absenceReviewUrl(repository, commitSha, signal, hasGitHubDirectory),
       });
     }
     inventoryEvidenceIds.set(signal, ids);
@@ -88,14 +104,22 @@ export async function buildRepositoryProfile(
     for (const path of pathsBySignal.get(signal) ?? []) {
       const id = newId();
       inventoryEvidenceIds.get(signal)?.push(id);
-      let content = contents.get(path) ?? "";
+      const content = contents.get(path) ?? "";
+      evidence.push(evidenceForFile(repository, signal, path, commitSha, content, id));
       if (signal === "ci") {
         const run = workflowRuns.find((item) => item.path === path || item.path.endsWith(path));
-        content += run
-          ? `\n\n[Observed workflow execution: ${run.status}; conclusion=${run.conclusion ?? "none"}; updated_at=${run.updated_at}; url=${run.html_url}]`
-          : "\n\n[No workflow execution found in the retrieved run window.]";
+        if (run) {
+          const runId = newId();
+          inventoryEvidenceIds.get(signal)?.push(runId);
+          evidence.push({
+            id: runId,
+            signal,
+            sourceType: "workflow_run",
+            summary: `Workflow ${path} ran with status=${run.status}, conclusion=${run.conclusion ?? "none"}, updated_at=${run.updated_at}`,
+            reviewUrl: run.html_url,
+          });
+        }
       }
-      evidence.push(evidenceForFile(repository, signal, path, commitSha, content, id));
     }
   }
 

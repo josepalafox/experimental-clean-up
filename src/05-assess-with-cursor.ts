@@ -15,6 +15,13 @@ export interface AssessmentOutcome {
   attempts: number;
 }
 
+function withLineNumbers(content: string): string {
+  return content
+    .split("\n")
+    .map((line, index) => `${String(index + 1).padStart(4, " ")} | ${line}`)
+    .join("\n");
+}
+
 export async function assessProfile(
   profile: RepositoryProfile,
   cursorApiKey: string,
@@ -62,7 +69,7 @@ export async function assessProfile(
               source_type: item.sourceType,
               ...(item.path ? { path: item.path } : {}),
               summary: item.summary,
-              ...(item.content ? { content: item.content } : {}),
+              ...(item.content ? { content: withLineNumbers(item.content) } : {}),
               review_url: item.reviewUrl,
             };
           }),

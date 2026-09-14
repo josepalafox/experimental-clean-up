@@ -33,7 +33,8 @@ ${SIGNAL_DEFINITIONS}
 For each unresolved signal:
 1. Request the evidence identifiers needed to inspect it.
 2. Select exactly one state: substantive, weak, absent, or unclear.
-3. Cite only supplied evidence identifiers and give a concise explanation.
+3. Return one concise evidence_claim for each fact you rely on. Each claim must name a supplied evidence_id.
+4. For file evidence, use the line numbers in the requested content and include line_start and line_end. Omit line numbers only for non-file evidence.
 
 Use absent only when the inspected evidence establishes that no relevant material exists. Use unclear when the available evidence is insufficient. Do not decide whether deletion is safe.
 

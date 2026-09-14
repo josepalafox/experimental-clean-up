@@ -1,4 +1,4 @@
-import type { AuditSummary, FinalResult, RepositoryProfile } from "./support/domain-types.js";
+import type { AuditSummary, EvidenceClaim, EvidenceItem, FinalResult, RepositoryProfile } from "./support/domain-types.js";
 
 // Step 08: Renders the final human-readable and machine-readable evidence package.
 
@@ -23,27 +23,39 @@ export function renderProfileSummary(profiles: RepositoryProfile[], enumerated: 
   return `${lines.join("\n")}\n`;
 }
 
-// Callout: Every surfaced judgment links back to the exact evidence a reviewer can inspect.
+function evidenceLink(claim: EvidenceClaim, evidence: EvidenceItem | undefined): string {
+  if (!evidence) return claim.evidence_id;
+  const lineAnchor =
+    evidence.sourceType === "file" && claim.line_start && claim.line_end
+      ? claim.line_start === claim.line_end
+        ? `#L${claim.line_start}`
+        : `#L${claim.line_start}-L${claim.line_end}`
+      : "";
+  return `[${claim.evidence_id}](${evidence.reviewUrl}${lineAnchor})`;
+}
+
+// Callout: Each written claim has one evidence ID and, for files, a direct GitHub line link.
 function renderResult(result: FinalResult): string[] {
   const lines = [
     `## [${result.repository.fullName}](${result.repository.htmlUrl})`,
     "",
     `**Category:** \`${result.category}\` · **Inactive days:** ${result.inactiveDays ?? "unknown"} · **Commit:** [${result.commitSha.slice(0, 7)}](${result.repository.htmlUrl}/commit/${result.commitSha})`,
     "",
-    "| Signal | State | Evidence |",
-    "|---|---|---|",
+    "| Signal | State |",
+    "|---|---|",
   ];
   const evidenceById = new Map(result.evidence.map((item) => [item.id, item]));
   for (const signal of result.signals) {
-    const links = signal.evidence_ids
-      .map((id) => {
-        const item = evidenceById.get(id);
-        return item ? `[${id}](${item.reviewUrl})` : id;
-      })
-      .join(", ");
-    lines.push(`| ${signal.signal} | \`${signal.state}\` | ${links} |`);
+    lines.push(`| ${signal.signal} | \`${signal.state}\` |`);
   }
-  lines.push("", ...result.signals.map((signal) => `- **${signal.signal}:** ${signal.explanation}`), "");
+  lines.push("");
+  for (const signal of result.signals) {
+    lines.push(`### ${signal.signal} — ${signal.state}`, "");
+    for (const claim of signal.evidence_claims) {
+      lines.push(`- ${evidenceLink(claim, evidenceById.get(claim.evidence_id))}: ${claim.claim}`);
+    }
+    lines.push("");
+  }
   return lines;
 }
 

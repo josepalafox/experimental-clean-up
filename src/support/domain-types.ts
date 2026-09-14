@@ -85,11 +85,17 @@ export interface RepositoryProfile {
   requestCount: number;
 }
 
+export interface EvidenceClaim {
+  evidence_id: string;
+  claim: string;
+  line_start?: number;
+  line_end?: number;
+}
+
 export interface SignalAssessment {
   signal: Signal;
   state: SignalState;
-  evidence_ids: string[];
-  explanation: string;
+  evidence_claims: EvidenceClaim[];
 }
 
 // Callout: The model returns only bounded signal assessments, not policy or free-form findings.

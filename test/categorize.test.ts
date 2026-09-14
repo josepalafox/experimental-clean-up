@@ -7,8 +7,7 @@ function signals(states: SignalState[]): FinalSignal[] {
   return SIGNALS.map((signal, index) => ({
     signal,
     state: states[index]!,
-    evidence_ids: [`E-${String(index + 1).padStart(3, "0")}`],
-    explanation: "test",
+    evidence_claims: [{ evidence_id: `E-${String(index + 1).padStart(3, "0")}`, claim: "test" }],
     decided_by: "model",
   }));
 }

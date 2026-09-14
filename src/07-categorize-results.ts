@@ -41,6 +41,12 @@ export function buildFinalResult(
   assessmentAttempts: number,
 ): FinalResult {
   const modelBySignal = new Map(modelAssessment.signal_assessments.map((item) => [item.signal, item]));
+  const evidenceById = new Map(profile.evidence.map((item) => [item.id, item]));
+  const deterministicClaims = (evidenceIds: string[], fallback: string) =>
+    evidenceIds.map((evidence_id) => ({
+      evidence_id,
+      claim: evidenceById.get(evidence_id)?.summary ?? fallback,
+    }));
   const signals: FinalSignal[] = SIGNALS.map((signal) => {
     const inventory = profile.signalInventory.find((item) => item.signal === signal);
     if (!inventory) throw new Error(`Missing inventory for ${signal}`);
@@ -48,8 +54,7 @@ export function buildFinalResult(
       return {
         signal,
         state: "absent",
-        evidence_ids: inventory.evidenceIds,
-        explanation: "The completed repository inventory found no matching artifact.",
+        evidence_claims: deterministicClaims(inventory.evidenceIds, "The completed repository-tree search found no matching artifact."),
         decided_by: "profiler",
       };
     }
@@ -58,8 +63,7 @@ export function buildFinalResult(
       return {
         signal,
         state: "unclear",
-        evidence_ids: inventory.evidenceIds,
-        explanation: "Required evidence collection was incomplete.",
+        evidence_claims: deterministicClaims(inventory.evidenceIds, "Required evidence collection was incomplete."),
         decided_by: "validation_override",
       };
     }

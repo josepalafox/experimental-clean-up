@@ -26,7 +26,7 @@ export function unresolvedSignals(profile: RepositoryProfile): Signal[] {
     .map((item) => item.signal);
 }
 
-// Callout: This rejects malformed results, invented evidence, duplicates, and missing signals.
+// Callout: This rejects malformed results, invented evidence, invalid line ranges, and missing signals.
 export function validateModelAssessment(
   raw: unknown,
   requestedSignals: Signal[],
@@ -45,12 +45,26 @@ export function validateModelAssessment(
     if (!requested.has(result.signal)) errors.push(`Unexpected signal: ${result.signal}`);
     if (seen.has(result.signal)) errors.push(`Duplicate signal: ${result.signal}`);
     seen.add(result.signal);
-    for (const evidenceId of result.evidence_ids) {
-      const item = evidenceById.get(evidenceId);
+    const claimEvidenceIds = new Set<string>();
+    for (const claim of result.evidence_claims) {
+      if (claimEvidenceIds.has(claim.evidence_id)) {
+        errors.push(`Duplicate evidence claim ${claim.evidence_id} for ${result.signal}`);
+      }
+      claimEvidenceIds.add(claim.evidence_id);
+      const item = evidenceById.get(claim.evidence_id);
       if (!item) {
-        errors.push(`Unknown evidence identifier ${evidenceId} for ${result.signal}`);
+        errors.push(`Unknown evidence identifier ${claim.evidence_id} for ${result.signal}`);
       } else if (item.signal !== result.signal && item.signal !== "context") {
-        errors.push(`Evidence ${evidenceId} does not support signal ${result.signal}`);
+        errors.push(`Evidence ${claim.evidence_id} does not support signal ${result.signal}`);
+      } else if (item.sourceType === "file") {
+        const lineCount = item.content?.split("\n").length ?? 0;
+        if (!claim.line_start || !claim.line_end) {
+          errors.push(`File evidence ${claim.evidence_id} requires a line range`);
+        } else if (claim.line_start > claim.line_end || claim.line_end > lineCount) {
+          errors.push(`Invalid line range for ${claim.evidence_id}`);
+        }
+      } else if (claim.line_start || claim.line_end) {
+        errors.push(`Non-file evidence ${claim.evidence_id} must not include a line range`);
       }
     }
   }

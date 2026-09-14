@@ -7,6 +7,7 @@ const evidence: EvidenceItem[] = [
     id: "E-001",
     signal: "prompts",
     sourceType: "file",
+    content: "first line\nsecond line",
     summary: "prompt",
     reviewUrl: "https://example.test/prompt",
   },
@@ -18,7 +19,11 @@ describe("validateModelAssessment", () => {
     const result = validateModelAssessment(
       {
         signal_assessments: [
-          { signal: "prompts", state: "weak", evidence_ids: ["E-001"], explanation: "Template text." },
+          {
+            signal: "prompts",
+            state: "weak",
+            evidence_claims: [{ evidence_id: "E-001", claim: "Template text.", line_start: 1, line_end: 2 }],
+          },
         ],
       },
       ["prompts"],
@@ -31,7 +36,11 @@ describe("validateModelAssessment", () => {
     const result = validateModelAssessment(
       {
         signal_assessments: [
-          { signal: "prompts", state: "weak", evidence_ids: ["E-999"], explanation: "Template text." },
+          {
+            signal: "prompts",
+            state: "weak",
+            evidence_claims: [{ evidence_id: "E-999", claim: "Template text.", line_start: 1, line_end: 1 }],
+          },
         ],
       },
       ["prompts"],

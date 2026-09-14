@@ -4,7 +4,7 @@ import { SIGNALS, SIGNAL_STATES } from "./domain-types.js";
 
 // Supporting file: defines the machine-checkable contracts used by the agent tools.
 
-// Callout: This JSON Schema constrains the model to known fields, signals, states, and evidence IDs.
+// Callout: This JSON Schema ties every model claim to one known evidence identifier and location.
 export const assessmentSchema: JSONSchemaType<ModelAssessment> = {
   type: "object",
   additionalProperties: false,
@@ -17,18 +17,26 @@ export const assessmentSchema: JSONSchemaType<ModelAssessment> = {
       items: {
         type: "object",
         additionalProperties: false,
-        required: ["signal", "state", "evidence_ids", "explanation"],
+        required: ["signal", "state", "evidence_claims"],
         properties: {
           signal: { type: "string", enum: [...SIGNALS] },
           state: { type: "string", enum: [...SIGNAL_STATES] },
-          evidence_ids: {
+          evidence_claims: {
             type: "array",
             minItems: 1,
             maxItems: 12,
-            uniqueItems: true,
-            items: { type: "string", pattern: "^E-[0-9]{3}$" },
+            items: {
+              type: "object",
+              additionalProperties: false,
+              required: ["evidence_id", "claim"],
+              properties: {
+                evidence_id: { type: "string", pattern: "^E-[0-9]{3}$" },
+                claim: { type: "string", minLength: 1, maxLength: 300 },
+                line_start: { type: "integer", minimum: 1, nullable: true },
+                line_end: { type: "integer", minimum: 1, nullable: true },
+              },
+            },
           },
-          explanation: { type: "string", minLength: 1, maxLength: 500 },
         },
       },
     },
