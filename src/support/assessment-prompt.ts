@@ -28,7 +28,8 @@ export function selectOnboardingPassages(content: string): string {
   const headings: Array<{ line: number; level: number; title: string }> = [];
   for (let index = 0; index < lines.length; index += 1) {
     const match = /^(#{1,3})\s+(.+)/.exec(lines[index] ?? "");
-    if (match) headings.push({ line: index, level: match[1].length, title: match[2] ?? "" });
+    const hashes = match?.[1];
+    if (hashes) headings.push({ line: index, level: hashes.length, title: match[2] ?? "" });
   }
 
   const ranges: Array<[number, number]> = [];
