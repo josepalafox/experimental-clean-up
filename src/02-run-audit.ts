@@ -11,27 +11,23 @@ import type { AuditSummary, RepositoryProfile } from "./support/domain-types.js"
 
 // Step 02: Orchestrates the complete path from repository discovery to output.
 
-// Callout: Local and GitHub Actions runs enter through main(). "profile" measures scope
+// Callout: 01-audit-trigger.yml and local commands enter through main(). "profile" measures scope
 // and collects evidence without model cost; "assess" continues through the full evaluation.
 // Larger deployments would add rate-limit-aware batching around this same entry point.
 async function main(): Promise<void> {
   const config = loadConfig();
   const client = new GitHubClient(config.githubToken, config.maxRequests);
-  // Callout: Repository discovery is deterministic; the agent is not involved.
+  // Fetch the public repository pool. 03-select-candidates.ts applies the 14-day inactivity gate.
   const repositories = await client.listOwnedPublicRepositories(config.owner, config.utilityRepository);
   const profiles: RepositoryProfile[] = [];
   const errors: AuditSummary["errors"] = [];
 
+  // Each repository begins in 03-select-candidates.ts; selected candidates continue through 08-render-report.ts.
   for (const repository of repositories) {
-    // Demo scope: require repositories to belong to the configured personal namespace;
-    // an organization or enterprise deployment would replace this ownership boundary.
-    if (repository.owner.toLowerCase() !== config.owner.toLowerCase()) {
-      throw new Error(`Owner boundary violation: ${repository.fullName}`);
-    }
     try {
-      // Callout: Filter for 14 days of human inactivity; Step 03 calculates the result.
+      // Callout: Filter for 14 days of human inactivity; 03-select-candidates.ts calculates the result.
       const { selection, commitSha } = await selectCandidate(client, repository, config.inactivityDays);
-      // Active repositories stop here; selected repositories continue to evidence collection.
+      // Active repositories stop here; selected repositories continue to 04-collect-evidence.ts.
       if (!selection.selected) continue;
       profiles.push(await buildRepositoryProfile(client, repository, selection, commitSha));
     } catch (error) {
@@ -40,7 +36,7 @@ async function main(): Promise<void> {
   }
 
   await mkdir("reports", { recursive: true });
-  // Callout: Profile mode measures scope and validates evidence without model cost.
+  // Callout: Profile mode measures scope and tests deterministic collection without model cost; 08-render-report.ts writes its output.
   if (config.auditMode === "profile") {
     const report = renderProfileSummary(profiles, repositories.length);
     await writeFile("reports/latest.md", report, "utf8");
@@ -51,18 +47,22 @@ async function main(): Promise<void> {
   }
 
   const results = [];
-  // Callout: This cap bounds cost and review volume for each run.
+  // Callout: Limit the number of candidate repositories sent to 05-assess-with-cursor.ts in one run.
+  // That stage also allows at most two assessment attempts per candidate.
   const profilesToAssess = profiles.slice(0, config.maxAssessments);
   for (const profile of profilesToAssess) {
     try {
+      // Determine which signals still need model judgment.
       const requestedSignals = unresolvedSignals(profile);
-      // Callout: This is the handoff from deterministic profiling to the Cursor SDK.
+      // Callout: Hand the bounded profile and unresolved signals to 05-assess-with-cursor.ts and the Cursor SDK.
       const outcome = await assessProfile(
         profile,
         config.cursorApiKey!,
         config.cursorModel,
         requestedSignals,
       );
+      // 05-assess-with-cursor.ts returns only an assessment already validated by 06-validate-assessment.ts.
+      // 07-categorize-results.ts merges deterministic and model results into the final category.
       results.push(buildFinalResult(profile, outcome.assessment, outcome.attempts));
     } catch (error) {
       errors.push({ repository: profile.repository.fullName, error: errorMessage(error) });
@@ -81,13 +81,13 @@ async function main(): Promise<void> {
     profiles: profiles.map((profile) => ({ ...profile, evidence: profile.evidence.map(({ content: _content, ...item }) => item) })),
     errors,
   };
-  // Callout: The same validated result becomes human-readable and machine-readable output.
+  // Callout: 08-render-report.ts turns the validated result into human-readable and machine-readable output.
   const report = renderAuditReport(summary);
   await writeFile("reports/latest.md", report, "utf8");
   await writeFile("reports/latest.json", `${JSON.stringify(summary, null, 2)}\n`, "utf8");
   await writeJobSummary(report);
 
-  // Callout: This is the only optional GitHub write, and it targets the utility repository.
+  // Callout: This is the only optional GitHub write; support/github-client.ts targets the utility repository.
   if (config.createTrackingIssue) {
     if (!config.githubToken) throw new Error("GITHUB_TOKEN is required to create the tracking issue");
     const url = await client.upsertTrackingIssue(

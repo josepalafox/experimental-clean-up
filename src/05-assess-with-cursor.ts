@@ -28,6 +28,8 @@ export async function assessProfile(
   cursorModel: string,
   requestedSignals: Signal[],
 ): Promise<AssessmentOutcome> {
+  // Callout: Skip the model when deterministic collection resolved every signal;
+  // 07-categorize-results.ts can finish from the collected evidence alone.
   if (requestedSignals.length === 0) {
     return { assessment: { signal_assessments: [] }, attempts: 0 };
   }
@@ -35,6 +37,7 @@ export async function assessProfile(
   // Callout: Both tools close over this local evidence bundle and need no GitHub access.
   const evidenceById = new Map(profile.evidence.map((item) => [item.id, item]));
   const ajv = new Ajv({ allErrors: true });
+  // Validate the agent's request shape before looking up local evidence.
   const validateRequest = ajv.compile(evidenceRequestSchema);
   let accepted: ModelAssessment | undefined;
   let latestErrors: string[] = [];
