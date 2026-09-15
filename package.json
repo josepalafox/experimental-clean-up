@@ -1,7 +1,7 @@
 {
   "name": "experimental-clean-up",
   "version": "0.1.0",
-  "private": false,
+  "private": true,
   "description": "Evidence-backed review of quiet GitHub experiments using the Cursor SDK.",
   "type": "module",
   "engines": {

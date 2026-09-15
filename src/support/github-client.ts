@@ -150,6 +150,13 @@ export class GitHubClient {
       const items = await this.request<T[]>(`${path}${separator}per_page=100&page=${page}`);
       collected.push(...items);
       if (items.length < 100) break;
+      if (page === maxPages) {
+        throw new GitHubApiError(
+          `GitHub listing truncated after ${maxPages} pages of 100 items`,
+          422,
+          path,
+        );
+      }
     }
     return collected;
   }

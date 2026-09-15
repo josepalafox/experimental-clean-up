@@ -36,11 +36,13 @@ async function main(): Promise<void> {
   }
 
   await mkdir("reports", { recursive: true });
+  // Callout: File bodies stay in memory for assessment; published packages keep only metadata.
+  const publishedProfiles = profiles.map(withoutFileContents);
   // Callout: Profile mode measures scope and tests deterministic collection without model cost; 08-render-report.ts writes its output.
   if (config.auditMode === "profile") {
     const report = renderProfileSummary(profiles, repositories.length);
     await writeFile("reports/latest.md", report, "utf8");
-    await writeFile("reports/profiles.json", `${JSON.stringify(profiles, null, 2)}\n`, "utf8");
+    await writeFile("reports/profiles.json", `${JSON.stringify(publishedProfiles, null, 2)}\n`, "utf8");
     await writeJobSummary(report);
     console.log(`Profiled ${repositories.length} repositories; selected ${profiles.length} candidates.`);
     return;
@@ -78,7 +80,7 @@ async function main(): Promise<void> {
     candidatesDeferred: Math.max(0, profiles.length - profilesToAssess.length),
     mode: config.auditMode,
     results,
-    profiles: profiles.map((profile) => ({ ...profile, evidence: profile.evidence.map(({ content: _content, ...item }) => item) })),
+    profiles: publishedProfiles,
     errors,
   };
   // Callout: 08-render-report.ts turns the validated result into human-readable and machine-readable output.
@@ -104,6 +106,13 @@ async function main(): Promise<void> {
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+function withoutFileContents(profile: RepositoryProfile): RepositoryProfile {
+  return {
+    ...profile,
+    evidence: profile.evidence.map(({ content: _content, ...item }) => item),
+  };
 }
 
 async function writeJobSummary(report: string): Promise<void> {

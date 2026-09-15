@@ -42,7 +42,7 @@ npm install
 npm run profile
 ```
 
-Profiling does not use Cursor and writes `reports/latest.md` plus the collected profiles. For the full assessment:
+Profiling does not use Cursor and writes `reports/latest.md` plus collected profiles with file contents omitted. For the full assessment:
 
 ```bash
 export CURSOR_API_KEY="..."
@@ -61,7 +61,7 @@ Useful settings:
 
 ## GitHub Actions
 
-The workflow is manually triggered. Add `CURSOR_API_KEY` as a repository secret before choosing `assess`. GitHub automatically supplies the workflow token used for public repository reads and the optional central issue; no separate GitHub secret is required.
+The workflow is manually triggered. Add `CURSOR_API_KEY` as a repository secret before choosing `assess`. GitHub automatically supplies a read-only workflow token for public repository reads. Re-enable `issues: write` on the workflow before turning on the tracking-issue input.
 
 The checked-in schedule is intentionally commented out. It can be enabled after the signal quality and operating cost are understood.
 

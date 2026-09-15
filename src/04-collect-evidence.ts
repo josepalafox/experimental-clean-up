@@ -11,8 +11,8 @@ import { SIGNALS } from "./support/domain-types.js";
 
 // Step 04: Builds the complete evidence boundary before the agent starts.
 
-const MAX_FILES_PER_SIGNAL = 8;
-const MAX_FILE_BYTES = 100_000;
+export const MAX_FILES_PER_SIGNAL = 8;
+export const MAX_FILE_BYTES = 100_000;
 
 const ABSENCE_SEARCHES: Record<Signal, string> = {
   prompts: ".github/prompts/**",
@@ -29,6 +29,28 @@ function absenceReviewUrl(repository: RepositoryRef, commitSha: string, signal: 
     : `${repository.htmlUrl}/tree/${commitSha}`;
 }
 
+export function collectSignalPaths(blobs: Array<{ path: string; size?: number }>): {
+  pathsBySignal: Map<Signal, string[]>;
+  skippedBySignal: Set<Signal>;
+} {
+  const pathsBySignal = new Map<Signal, string[]>(SIGNALS.map((signal) => [signal, []]));
+  const skippedBySignal = new Set<Signal>();
+
+  for (const item of blobs) {
+    for (const signal of fileSignals(item.path)) {
+      const paths = pathsBySignal.get(signal);
+      if (!paths) continue;
+      if ((item.size ?? 0) > MAX_FILE_BYTES || paths.length >= MAX_FILES_PER_SIGNAL) {
+        skippedBySignal.add(signal);
+        continue;
+      }
+      paths.push(item.path);
+    }
+  }
+
+  return { pathsBySignal, skippedBySignal };
+}
+
 export async function buildRepositoryProfile(
   client: GitHubClient,
   repository: RepositoryRef,
@@ -38,16 +60,7 @@ export async function buildRepositoryProfile(
   const tree = await client.getTree(repository, commitSha);
   const blobs = tree.tree.filter((item) => item.type === "blob");
   const hasGitHubDirectory = tree.tree.some((item) => item.path.startsWith(".github/"));
-  const pathsBySignal = new Map<Signal, string[]>(SIGNALS.map((signal) => [signal, []]));
-
-  for (const item of blobs) {
-    for (const signal of fileSignals(item.path)) {
-      const paths = pathsBySignal.get(signal);
-      if (paths && paths.length < MAX_FILES_PER_SIGNAL && (item.size ?? 0) <= MAX_FILE_BYTES) {
-        paths.push(item.path);
-      }
-    }
-  }
+  const { pathsBySignal, skippedBySignal } = collectSignalPaths(blobs);
 
   const evidence: EvidenceItem[] = [];
   let nextEvidenceNumber = 1;
@@ -66,16 +79,19 @@ export async function buildRepositoryProfile(
   for (const signal of SIGNALS) {
     const paths = pathsBySignal.get(signal) ?? [];
     const ids: string[] = [];
-    // Callout: A complete search with no matching file proves "absent" without model reasoning.
+    // Callout: A complete search with no matching file proves "absent"; skipped matches stay incomplete.
     if (paths.length === 0) {
       const id = newId();
       ids.push(id);
+      const skipped = skippedBySignal.has(signal);
       evidence.push({
         id,
         signal,
         sourceType: "repository_tree",
         commitSha,
-        summary: `${tree.truncated ? "Incomplete" : "Complete"} repository-tree search found no paths matching ${ABSENCE_SEARCHES[signal]}`,
+        summary: skipped
+          ? `Matching ${ABSENCE_SEARCHES[signal]} paths were skipped because they exceeded size or count limits`
+          : `${tree.truncated ? "Incomplete" : "Complete"} repository-tree search found no paths matching ${ABSENCE_SEARCHES[signal]}`,
         reviewUrl: absenceReviewUrl(repository, commitSha, signal, hasGitHubDirectory),
       });
     }
@@ -126,7 +142,8 @@ export async function buildRepositoryProfile(
   // Callout: Incomplete collection remains explicit and becomes "unclear" during validation.
   const signalInventory: SignalInventory[] = SIGNALS.map((signal) => {
     const matchedPaths = pathsBySignal.get(signal) ?? [];
-    const searchComplete = !tree.truncated && (signal !== "ci" || workflowRunCollectionComplete);
+    const searchComplete =
+      !tree.truncated && !skippedBySignal.has(signal) && (signal !== "ci" || workflowRunCollectionComplete);
     return {
       signal,
       searchStatus: searchComplete ? "complete" : "incomplete",
