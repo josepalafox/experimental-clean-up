@@ -389,6 +389,32 @@ function sameLogin(first: string, second: string): boolean {
   return first.toLowerCase() === second.toLowerCase();
 }
 
+const TEMPLATED_CI_WORKFLOW = /^(codeql|codeql-analysis|dependabot|stale|stale-bot|scorecard|ossf-scorecard|depsreview|dependency-review|sponsors|calibreapp-image-actions|release-drafter)(\b|-)/;
+const PREFERRED_CI_WORKFLOW = /^(ci|test|tests|auto-test|build|lint|check)$/;
+const LIKELY_CI_WORKFLOW = /(ci|test|build|lint|check|e2e|unit|spec)/;
+
+export const MAX_CI_WORKFLOWS = 2;
+
+// Callout: CodeQL, Dependabot, and similar GitHub templates are not stewardship evidence.
+export function isTemplatedCiWorkflow(path: string): boolean {
+  const basename = path.toLowerCase().split("/").at(-1)?.replace(/\.ya?ml$/, "") ?? "";
+  return TEMPLATED_CI_WORKFLOW.test(basename);
+}
+
+function ciWorkflowPriority(path: string): number {
+  const basename = path.toLowerCase().split("/").at(-1)?.replace(/\.ya?ml$/, "") ?? "";
+  if (PREFERRED_CI_WORKFLOW.test(basename)) return 0;
+  if (LIKELY_CI_WORKFLOW.test(basename) || basename === "pr" || basename === "pull-request") return 1;
+  return 2;
+}
+
+// Callout: One or two repository-specific workflows are enough to judge CI; extras are not inspected.
+export function selectCiWorkflowPaths(paths: string[]): string[] {
+  return [...paths]
+    .sort((left, right) => ciWorkflowPriority(left) - ciWorkflowPriority(right) || left.localeCompare(right))
+    .slice(0, MAX_CI_WORKFLOWS);
+}
+
 // Callout: Deterministic path rules decide which files can support each stewardship signal.
 export function fileSignals(path: string): Signal[] {
   const normalized = path.toLowerCase();
@@ -406,7 +432,13 @@ export function fileSignals(path: string): Signal[] {
   ) {
     signals.add("skill_or_spec");
   }
-  if (normalized.startsWith(".github/workflows/") && /\.ya?ml$/.test(normalized)) signals.add("ci");
+  if (
+    normalized.startsWith(".github/workflows/") &&
+    /\.ya?ml$/.test(normalized) &&
+    !isTemplatedCiWorkflow(normalized)
+  ) {
+    signals.add("ci");
+  }
   if (
     ["codeowners", ".github/codeowners", "docs/codeowners"].includes(normalized) ||
     (repositoryLevel && ["readme.md", "security.md"].includes(basename))

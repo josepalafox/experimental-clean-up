@@ -1,4 +1,4 @@
-import { GitHubClient, evidenceForFile, fileSignals } from "./support/github-client.js";
+import { GitHubClient, evidenceForFile, fileSignals, selectCiWorkflowPaths } from "./support/github-client.js";
 import type {
   CandidateSelection,
   EvidenceItem,
@@ -14,10 +14,14 @@ import { SIGNALS } from "./support/domain-types.js";
 export const MAX_FILES_PER_SIGNAL = 8;
 export const MAX_FILE_BYTES = 100_000;
 
+function isRepositoryReadme(path: string): boolean {
+  return path.toLowerCase() === "readme.md";
+}
+
 const ABSENCE_SEARCHES: Record<Signal, string> = {
   prompts: ".github/prompts/**",
   skill_or_spec: ".github/{skills,agents,instructions}/** and named specification files",
-  ci: ".github/workflows/*.yml or .yaml",
+  ci: "repository-specific .github/workflows files (excluding CodeQL, Dependabot, and similar templates)",
   ownership: "CODEOWNERS, README.md, or SECURITY.md",
   onboarding: "README.md or repository-level setup and install files",
 };
@@ -35,12 +39,19 @@ export function collectSignalPaths(blobs: Array<{ path: string; size?: number }>
 } {
   const pathsBySignal = new Map<Signal, string[]>(SIGNALS.map((signal) => [signal, []]));
   const skippedBySignal = new Set<Signal>();
+  const ciCandidates: string[] = [];
 
   for (const item of blobs) {
     for (const signal of fileSignals(item.path)) {
+      if (signal === "ci") {
+        if ((item.size ?? 0) > MAX_FILE_BYTES) continue;
+        ciCandidates.push(item.path);
+        continue;
+      }
       const paths = pathsBySignal.get(signal);
       if (!paths) continue;
-      if ((item.size ?? 0) > MAX_FILE_BYTES || paths.length >= MAX_FILES_PER_SIGNAL) {
+      const oversized = (item.size ?? 0) > MAX_FILE_BYTES && !isRepositoryReadme(item.path);
+      if (oversized || paths.length >= MAX_FILES_PER_SIGNAL) {
         skippedBySignal.add(signal);
         continue;
       }
@@ -48,6 +59,8 @@ export function collectSignalPaths(blobs: Array<{ path: string; size?: number }>
     }
   }
 
+  // Callout: Extra workflows are ignored rather than making CI incomplete; the model inspects at most two files.
+  pathsBySignal.set("ci", selectCiWorkflowPaths(ciCandidates));
   return { pathsBySignal, skippedBySignal };
 }
 
@@ -106,13 +119,12 @@ export async function buildRepositoryProfile(
   }
 
   let workflowRuns: Awaited<ReturnType<GitHubClient["getWorkflowRuns"]>> = [];
-  let workflowRunCollectionComplete = true;
   // Callout: CI evidence combines configuration files with observed workflow execution.
   if ((pathsBySignal.get("ci")?.length ?? 0) > 0) {
     try {
       workflowRuns = await client.getWorkflowRuns(repository);
     } catch {
-      workflowRunCollectionComplete = false;
+      workflowRuns = [];
     }
   }
 
@@ -142,8 +154,7 @@ export async function buildRepositoryProfile(
   // Callout: Incomplete collection remains explicit and becomes "unclear" during validation.
   const signalInventory: SignalInventory[] = SIGNALS.map((signal) => {
     const matchedPaths = pathsBySignal.get(signal) ?? [];
-    const searchComplete =
-      !tree.truncated && !skippedBySignal.has(signal) && (signal !== "ci" || workflowRunCollectionComplete);
+    const searchComplete = !tree.truncated && !skippedBySignal.has(signal);
     return {
       signal,
       searchStatus: searchComplete ? "complete" : "incomplete",
