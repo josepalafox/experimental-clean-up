@@ -19,41 +19,33 @@ async function main(): Promise<void> {
   const client = new GitHubClient(config.githubToken, config.maxRequests);
   // Fetch the public repository pool. 03-select-candidates.ts applies the 14-day inactivity gate.
   const repositories = await client.listOwnedPublicRepositories(config.owner, config.utilityRepository);
-  const profiles: RepositoryProfile[] = [];
+  const publishedProfiles: RepositoryProfile[] = [];
+  const results = [];
   const errors: AuditSummary["errors"] = [];
+  let candidatesSelected = 0;
+  let candidatesDeferred = 0;
+  let assessmentsStarted = 0;
 
-  // Each repository begins in 03-select-candidates.ts; selected candidates continue through 08-render-report.ts.
+  // Callout: Process one selected repository end-to-end. File contents lose all references after each iteration;
+  // only compact report metadata accumulates, rather than every repository's prefetched file bodies.
   for (const repository of repositories) {
     try {
       // Callout: Filter for 14 days of human inactivity; 03-select-candidates.ts calculates the result.
       const { selection, commitSha } = await selectCandidate(client, repository, config.inactivityDays);
       // Active repositories stop here; selected repositories continue to 04-collect-evidence.ts.
       if (!selection.selected) continue;
-      profiles.push(await buildRepositoryProfile(client, repository, selection, commitSha));
-    } catch (error) {
-      errors.push({ repository: repository.fullName, error: errorMessage(error) });
-    }
-  }
+      const profile = await buildRepositoryProfile(client, repository, selection, commitSha);
+      candidatesSelected += 1;
+      // Callout: Published artifacts retain evidence metadata, never prefetched file contents.
+      publishedProfiles.push(withoutFileContents(profile));
 
-  await mkdir("reports", { recursive: true });
-  // Callout: File bodies stay in memory for assessment; published packages keep only metadata.
-  const publishedProfiles = profiles.map(withoutFileContents);
-  // Callout: Profile mode measures scope and tests deterministic collection without model cost; 08-render-report.ts writes its output.
-  if (config.auditMode === "profile") {
-    const report = renderProfileSummary(profiles, repositories.length);
-    await writeFile("reports/latest.md", report, "utf8");
-    await writeFile("reports/profiles.json", `${JSON.stringify(publishedProfiles, null, 2)}\n`, "utf8");
-    await writeJobSummary(report);
-    console.log(`Profiled ${repositories.length} repositories; selected ${profiles.length} candidates.`);
-    return;
-  }
+      if (config.auditMode === "profile") continue;
+      if (assessmentsStarted >= config.maxAssessments) {
+        candidatesDeferred += 1;
+        continue;
+      }
 
-  const results = [];
-  // Callout: Limit the number of candidate repositories sent to 05-assess-with-cursor.ts in one run.
-  // That stage also allows at most two assessment attempts per candidate.
-  const profilesToAssess = profiles.slice(0, config.maxAssessments);
-  for (const profile of profilesToAssess) {
-    try {
+      assessmentsStarted += 1;
       // Determine which signals still need model judgment.
       const requestedSignals = unresolvedSignals(profile);
       // Callout: Hand the bounded profile and unresolved signals to 05-assess-with-cursor.ts and the Cursor SDK.
@@ -67,17 +59,28 @@ async function main(): Promise<void> {
       // 07-categorize-results.ts merges deterministic and model results into the final category.
       results.push(buildFinalResult(profile, outcome.assessment, outcome.attempts));
     } catch (error) {
-      errors.push({ repository: profile.repository.fullName, error: errorMessage(error) });
+      errors.push({ repository: repository.fullName, error: errorMessage(error) });
     }
+  }
+
+  await mkdir("reports", { recursive: true });
+  // Callout: Profile mode measures scope and tests deterministic collection without model cost; 08-render-report.ts writes its output.
+  if (config.auditMode === "profile") {
+    const report = renderProfileSummary(publishedProfiles, repositories.length);
+    await writeFile("reports/latest.md", report, "utf8");
+    await writeFile("reports/profiles.json", `${JSON.stringify(publishedProfiles, null, 2)}\n`, "utf8");
+    await writeJobSummary(report);
+    console.log(`Profiled ${repositories.length} repositories; selected ${candidatesSelected} candidates.`);
+    return;
   }
 
   const summary: AuditSummary = {
     generatedAt: new Date().toISOString(),
     owner: config.owner,
     repositoriesEnumerated: repositories.length,
-    candidatesSelected: profiles.length,
+    candidatesSelected,
     candidatesAssessed: results.length,
-    candidatesDeferred: Math.max(0, profiles.length - profilesToAssess.length),
+    candidatesDeferred,
     mode: config.auditMode,
     results,
     profiles: publishedProfiles,
@@ -101,7 +104,7 @@ async function main(): Promise<void> {
     );
     console.log(`Tracking issue: ${url}`);
   }
-  console.log(`Assessed ${results.length} of ${profiles.length} candidates.`);
+  console.log(`Assessed ${results.length} of ${candidatesSelected} candidates.`);
 }
 
 function errorMessage(error: unknown): string {
