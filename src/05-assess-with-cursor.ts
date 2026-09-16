@@ -110,6 +110,9 @@ export async function assessProfile(
       // Callout: Empty setting sources prevent user or project configuration from adding capabilities.
       settingSources: [],
       customTools,
+      // Callout: The Cursor API key stays on Agent.create in this process. Sandbox only wraps
+      // shell the model is not offered; in-process custom tools keep running on the host.
+      sandboxOptions: { enabled: true },
     },
   });
 

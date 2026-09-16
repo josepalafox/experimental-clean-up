@@ -16,7 +16,7 @@ The output is an evidence-linked review list. It is not a deletion decision, and
 6. Apply the final category rule in deterministic code and write Markdown and JSON reports.
 7. Optionally create or update one central `cleanup-review` issue in this repository.
 
-The agent has no shell, edit, browser, or GitHub tool. Repository text is treated as untrusted evidence. GitHub reads and the optional central issue write are performed by deterministic application code.
+The agent has no shell, edit, browser, or GitHub tool. Local assessment runs with the SDK sandbox enabled; the Cursor API key stays on `Agent.create` and is not injected into the sandbox. Repository text is treated as untrusted evidence. GitHub reads and the optional central issue write are performed by deterministic application code.
 
 ## Code tour
 
