@@ -85,6 +85,7 @@ export async function assessProfile(
             isError: true,
           };
         }
+        // Callout: This is the SDK output entering the application: a schema-validated assessment.
         accepted = validation.assessment;
         latestErrors = [];
         return { accepted: true, message: "Assessment validated." };
@@ -118,6 +119,7 @@ export async function assessProfile(
         idempotencyKey: `${profile.repository.id}-${profile.commitSha}-${attempt}`,
       });
       const result = await run.wait();
+      // Callout: Return only the accepted structured result to 02-run-audit.ts for deterministic categorization.
       if (accepted) return { assessment: accepted, attempts: attempt };
       if (result.status === "error") {
         latestErrors = [result.error?.message ?? "Cursor SDK run failed"];
