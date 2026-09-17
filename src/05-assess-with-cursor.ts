@@ -2,7 +2,7 @@ import { Agent, type SDKCustomTool, type SDKJsonValue } from "@cursor/sdk";
 import { Ajv } from "ajv";
 import { validateModelAssessment } from "./06-validate-assessment.js";
 import { assessmentSchema, evidenceRequestSchema, evidenceResponseSchema } from "./support/assessment-schema.js";
-import { buildAssessmentPrompt } from "./support/assessment-prompt.js";
+import { buildAssessmentPrompt, withLineNumbers } from "./support/assessment-prompt.js";
 import type { ModelAssessment, RepositoryProfile, Signal } from "./support/domain-types.js";
 
 // Step 05: Runs the bounded Cursor SDK assessment and repair loop.
@@ -13,13 +13,6 @@ const MAX_ATTEMPTS = 2;
 export interface AssessmentOutcome {
   assessment: ModelAssessment;
   attempts: number;
-}
-
-function withLineNumbers(content: string): string {
-  return content
-    .split("\n")
-    .map((line, index) => `${String(index + 1).padStart(4, " ")} | ${line}`)
-    .join("\n");
 }
 
 export async function assessProfile(
@@ -121,7 +114,7 @@ export async function assessProfile(
           ? buildAssessmentPrompt(profile, requestedSignals)
           : `The previous run did not produce an accepted submit_assessment call. Correct these errors and call submit_assessment now:\n${latestErrors.length ? latestErrors.join("\n") : "No valid structured submission was received."}`;
       const run = await agent.send(prompt, {
-        // Callout: The key makes each repository, commit, and attempt safe to retry.
+        // Callout: This identifies the repository, pinned commit, and logical assessment attempt.
         idempotencyKey: `${profile.repository.id}-${profile.commitSha}-${attempt}`,
       });
       const result = await run.wait();
