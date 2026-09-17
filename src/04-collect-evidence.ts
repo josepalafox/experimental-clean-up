@@ -9,7 +9,7 @@ import type {
 } from "./support/domain-types.js";
 import { SIGNALS } from "./support/domain-types.js";
 
-// Step 04: Builds the complete evidence boundary before the agent starts.
+// Step 04: Collects the local evidence bundle and records search coverage before assessment.
 
 export const MAX_FILES_PER_SIGNAL = 8;
 export const MAX_FILE_BYTES = 100_000;
@@ -59,7 +59,7 @@ export function collectSignalPaths(blobs: Array<{ path: string; size?: number }>
     }
   }
 
-  // Callout: Extra workflows are ignored rather than making CI incomplete; the model inspects at most two files.
+  // CI uses a two-file sample; extra workflows do not mark collection incomplete.
   pathsBySignal.set("ci", selectCiWorkflowPaths(ciCandidates));
   return { pathsBySignal, skippedBySignal };
 }
@@ -92,7 +92,6 @@ export async function buildRepositoryProfile(
   for (const signal of SIGNALS) {
     const paths = pathsBySignal.get(signal) ?? [];
     const ids: string[] = [];
-    // Callout: A complete search with no matching file proves "absent"; skipped matches stay incomplete.
     if (paths.length === 0) {
       const id = newId();
       ids.push(id);
@@ -111,15 +110,15 @@ export async function buildRepositoryProfile(
     inventoryEvidenceIds.set(signal, ids);
   }
 
-  // Callout: Relevant contents are prefetched; the agent never fetches new GitHub data.
   const uniquePaths = [...new Set([...pathsBySignal.values()].flat())];
   const contents = new Map<string, string>();
+  // Callout: Fetch selected file contents at the pinned commit; file 05 serves this local evidence, not GitHub.
   for (const path of uniquePaths) {
     contents.set(path, await client.getFile(repository, path, commitSha));
   }
 
   let workflowRuns: Awaited<ReturnType<GitHubClient["getWorkflowRuns"]>> = [];
-  // Callout: CI evidence combines configuration files with observed workflow execution.
+  // Workflow-run metadata is best effort and collected separately from the pinned files.
   if ((pathsBySignal.get("ci")?.length ?? 0) > 0) {
     try {
       workflowRuns = await client.getWorkflowRuns(repository);
@@ -151,7 +150,7 @@ export async function buildRepositoryProfile(
     }
   }
 
-  // Callout: Incomplete collection remains explicit and becomes "unclear" during validation.
+  // File 07 maps incomplete searches to unclear; complete searches with no selected paths become absent.
   const signalInventory: SignalInventory[] = SIGNALS.map((signal) => {
     const matchedPaths = pathsBySignal.get(signal) ?? [];
     const searchComplete = !tree.truncated && !skippedBySignal.has(signal);

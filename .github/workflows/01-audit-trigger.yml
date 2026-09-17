@@ -3,7 +3,7 @@ name: Experimental cleanup audit
 # Step 01: GitHub Actions trigger, permissions, runtime, and artifact publication.
 
 on:
-  # Callout: This manual trigger starts the utility and keeps the MVP operator-controlled.
+  # Callout: workflow_dispatch is the manual trigger; choose profile or assess below.
   workflow_dispatch:
     inputs:
       mode:
@@ -24,7 +24,7 @@ on:
         required: true
         default: false
         type: boolean
-  # Callout: Scheduled polling is an explicit future extension, not an active trigger.
+  # Future scheduling option; inactive while commented out.
   # schedule:
   #   - cron: "0 15 * * 1"
 
@@ -40,28 +40,27 @@ jobs:
       AUDIT_MODE: ${{ inputs.mode }}
       MAX_ASSESSMENTS: ${{ inputs.max_assessments }}
       CREATE_TRACKING_ISSUE: ${{ inputs.create_tracking_issue }}
-      # Callout: Pin one model so assessment comparisons are not affected by automatic routing.
+      # Callout: Select grok-4.6 instead of Auto; model judgments can still vary between runs.
       CURSOR_MODEL: grok-4.6
       CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
-      # Callout: GitHub supplies this token automatically for the current workflow run.
+      # GitHub supplies this run's token with the read-only permissions above.
       GITHUB_TOKEN: ${{ github.token }}
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      # Callout: This selects the Node.js runtime used by our TypeScript application.
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: "24"
           cache: npm
 
-      # Callout: Tests and compilation fail the job before the assessment can run.
       - run: npm ci
       - run: npm test
       - run: npm run build
+      # Callout: package.json maps this command to src/02-run-audit.ts.
       - run: npm run audit
 
-      # Callout: The evidence package is the output, so the MVP needs no database.
+      # Callout: Publish reports/ as the downloadable evidence package; retain it for seven days.
       - name: Upload evidence package
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7

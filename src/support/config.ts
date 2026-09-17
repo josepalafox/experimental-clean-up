@@ -1,9 +1,7 @@
 // Supporting file: centralizes scope, credentials, and per-run safety limits.
 const DEMO_OWNER = "josepalafox";
-// Callout: A fixed model makes repeated assessment results meaningfully comparable.
 export const DEFAULT_CURSOR_MODEL = "grok-4.6";
 
-// Callout: This hard boundary keeps the demo inside one public namespace.
 // Enterprise adaptation point: replace this fixed owner with an approved
 // organization or enterprise repository source plus an explicit allowlist.
 export const TARGET_OWNER = DEMO_OWNER;
@@ -35,12 +33,10 @@ export interface Config {
 export function loadConfig(): Config {
   const auditMode = process.env.AUDIT_MODE === "assess" ? "assess" : "profile";
   const cursorApiKey = process.env.CURSOR_API_KEY;
-  // Callout: Invalid assessment configuration fails before GitHub or Cursor work begins.
   if (auditMode === "assess" && !cursorApiKey) {
     throw new Error("CURSOR_API_KEY is required when AUDIT_MODE=assess");
   }
 
-  // Callout: These defaults bound inactivity, model cost, and GitHub API consumption.
   return {
     owner: TARGET_OWNER,
     utilityRepository: UTILITY_REPOSITORY,

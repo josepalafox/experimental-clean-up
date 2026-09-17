@@ -5,7 +5,6 @@ import { SIGNALS } from "./support/domain-types.js";
 
 // Step 06: Validates model structure, evidence references, and signal completeness.
 
-// Callout: Application-side validation independently checks the schema supplied to the agent tool.
 const ajv = new Ajv({ allErrors: true });
 const validateSchema = ajv.compile(assessmentSchema) as ValidateFunction<ModelAssessment>;
 
@@ -19,14 +18,14 @@ function formatErrors(errors: ErrorObject[] | null | undefined): string[] {
   return (errors ?? []).map((error) => `${error.instancePath || "/"} ${error.message ?? "is invalid"}`);
 }
 
-// Callout: The model receives only signals that deterministic collection could not resolve.
+// Only complete, unresolved signals go to the model; file 07 handles absent and incomplete evidence.
 export function unresolvedSignals(profile: RepositoryProfile): Signal[] {
   return profile.signalInventory
     .filter((item) => item.deterministicState === null && item.searchStatus === "complete")
     .map((item) => item.signal);
 }
 
-// Callout: This rejects malformed results, invented evidence, invalid line ranges, and missing signals.
+// Callout: Validate the schema and citation references, not whether the cited text proves the model's claim.
 export function validateModelAssessment(
   raw: unknown,
   requestedSignals: Signal[],
@@ -78,7 +77,7 @@ export function validateModelAssessment(
     : { valid: true, errors: [], assessment: raw };
 }
 
-// Callout: The final package must contain each of the five signals exactly once.
+// Require one result each for prompts, skill_or_spec, CI, ownership, and onboarding.
 export function validateFinalSignalSet(signals: Array<{ signal: Signal }>): string[] {
   const counts = new Map<Signal, number>(SIGNALS.map((signal) => [signal, 0]));
   for (const result of signals) counts.set(result.signal, (counts.get(result.signal) ?? 0) + 1);

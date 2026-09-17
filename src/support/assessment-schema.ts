@@ -4,7 +4,7 @@ import { SIGNALS, SIGNAL_STATES } from "./domain-types.js";
 
 // Supporting file: defines the machine-checkable contracts used by the agent tools.
 
-// Callout: This JSON Schema ties every model claim to one known evidence identifier and location.
+// Defines result shape; file 06 separately checks cited IDs and line ranges against collected evidence.
 export const assessmentSchema: JSONSchemaType<ModelAssessment> = {
   type: "object",
   additionalProperties: false,
@@ -43,7 +43,7 @@ export const assessmentSchema: JSONSchemaType<ModelAssessment> = {
   },
 };
 
-// Callout: The agent can request only a bounded list of pre-existing evidence identifiers.
+// Validates the ID list's format and size; file 05 checks whether the IDs exist.
 export const evidenceRequestSchema = {
   type: "object",
   additionalProperties: false,
@@ -59,7 +59,7 @@ export const evidenceRequestSchema = {
   },
 } as const;
 
-// Callout: This contract keeps evidence-tool responses predictable for the SDK agent.
+// Describes the tool response to the SDK; outputSchema is not runtime validation.
 export const evidenceResponseSchema = {
   type: "object",
   additionalProperties: false,

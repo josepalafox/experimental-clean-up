@@ -1,5 +1,5 @@
 // Supporting file: removes common credential formats from collected repository text.
-// Callout: Defense-in-depth redaction covers common credentials before model assessment.
+// Best effort: these patterns do not detect every secret format.
 const SECRET_PATTERNS: Array<[RegExp, string]> = [
   [/\bgh[pousr]_[A-Za-z0-9]{20,}\b/g, "[REDACTED_GITHUB_TOKEN]"],
   [/\bgithub_pat_[A-Za-z0-9_]{20,}\b/g, "[REDACTED_GITHUB_TOKEN]"],

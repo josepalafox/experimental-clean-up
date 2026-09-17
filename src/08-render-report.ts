@@ -1,8 +1,7 @@
 import type { AuditSummary, EvidenceClaim, EvidenceItem, FinalResult, RepositoryProfile } from "./support/domain-types.js";
 
-// Step 08: Renders the final human-readable and machine-readable evidence package.
+// Step 08: Renders Markdown; file 02 writes the report and serializes the separate JSON artifact.
 
-// Callout: Profile output makes the candidate population visible before model assessment.
 export function renderProfileSummary(profiles: RepositoryProfile[], enumerated: number): string {
   const lines = [
     "# Experimental cleanup profile",
@@ -34,7 +33,6 @@ function evidenceLink(claim: EvidenceClaim, evidence: EvidenceItem | undefined):
   return `[${claim.evidence_id}](${evidence.reviewUrl}${lineAnchor})`;
 }
 
-// Callout: Each written claim has one evidence ID and, for files, a direct GitHub line link.
 function renderResult(result: FinalResult): string[] {
   const lines = [
     `## [${result.repository.fullName}](${result.repository.htmlUrl})`,
@@ -52,6 +50,7 @@ function renderResult(result: FinalResult): string[] {
   for (const signal of result.signals) {
     lines.push(`### ${signal.signal} — ${signal.state}`, "");
     for (const claim of signal.evidence_claims) {
+      // Callout: Render each claim beside its evidence link; evidenceLink() adds line anchors for file citations.
       lines.push(`- ${evidenceLink(claim, evidenceById.get(claim.evidence_id))}: ${claim.claim}`);
     }
     lines.push("");
@@ -59,7 +58,6 @@ function renderResult(result: FinalResult): string[] {
   return lines;
 }
 
-// Callout: The report explicitly presents candidates for review, never deletion decisions.
 export function renderAuditReport(summary: AuditSummary): string {
   const surfaced = summary.results.filter((result) => result.category !== "not_surfaced");
   const lines = [

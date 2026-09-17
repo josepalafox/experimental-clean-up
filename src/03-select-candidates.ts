@@ -3,7 +3,6 @@ import type { CandidateSelection, RepositoryRef } from "./support/domain-types.j
 
 // Step 03: Selects repositories after the inexpensive human-inactivity check.
 
-// Callout: This inexpensive deterministic gate protects model cost.
 export async function selectCandidate(
   client: GitHubClient,
   repository: RepositoryRef,
@@ -26,7 +25,6 @@ export async function selectCandidate(
     ? Math.floor((Date.now() - Date.parse(lastHumanActivity.occurredAt)) / 86_400_000)
     : null;
 
-  // Callout: Unknown human activity is selected for review instead of being treated as active.
   return {
     commitSha: activity.commitSha,
     selection: {
@@ -34,6 +32,7 @@ export async function selectCandidate(
       primaryContributor,
       lastHumanActivity,
       inactiveDays,
+      // Callout: This comparison is the gate: at least thresholdDays (default 14), or unknown activity.
       selected: inactiveDays === null || inactiveDays >= thresholdDays,
       unavailableSources: [...new Set(unavailableSources)].sort(),
     },

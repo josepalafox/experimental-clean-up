@@ -7,7 +7,6 @@ import type { ModelAssessment, RepositoryProfile, Signal } from "./support/domai
 
 // Step 05: Runs the bounded Cursor SDK assessment and repair loop.
 
-// Callout: One repair attempt makes invalid structured output recoverable without an open-ended loop.
 const MAX_ATTEMPTS = 2;
 
 export interface AssessmentOutcome {
@@ -21,13 +20,11 @@ export async function assessProfile(
   cursorModel: string,
   requestedSignals: Signal[],
 ): Promise<AssessmentOutcome> {
-  // Callout: Skip the model when deterministic collection resolved every signal;
-  // 07-categorize-results.ts can finish from the collected evidence alone.
+  // Callout: No signals left for model judgment? Skip the SDK; file 07 handles absent or incomplete evidence.
   if (requestedSignals.length === 0) {
     return { assessment: { signal_assessments: [] }, attempts: 0 };
   }
 
-  // Callout: Both tools close over this local evidence bundle and need no GitHub access.
   const evidenceById = new Map(profile.evidence.map((item) => [item.id, item]));
   const ajv = new Ajv({ allErrors: true });
   // Validate the agent's request shape before looking up local evidence.
@@ -35,8 +32,8 @@ export async function assessProfile(
   let accepted: ModelAssessment | undefined;
   let latestErrors: string[] = [];
 
-  // Callout: These two custom tools are the agent's complete capability surface.
   const customTools: Record<string, SDKCustomTool> = {
+    // Callout: request_evidence validates the ID list, checks local IDs, then returns prefetched content only.
     request_evidence: {
       description: "Retrieve full, pre-collected evidence items by identifier. This tool has no network access.",
       inputSchema: evidenceRequestSchema as unknown as Record<string, SDKJsonValue>,
@@ -72,11 +69,12 @@ export async function assessProfile(
         };
       },
     },
-    // Callout: This tool enforces the JSON Schema and is the only accepted completion path.
     submit_assessment: {
       description: "Submit the complete structured assessment. This is the only accepted completion path.",
       inputSchema: assessmentSchema as unknown as Record<string, SDKJsonValue>,
       execute(args) {
+        // Callout: 06-validate-assessment.ts checks the submission's schema, signal coverage, IDs, and line ranges.
+        // The JSON Schema is in support/assessment-schema.ts; these checks do not prove a claim is true.
         const validation = validateModelAssessment(args, requestedSignals, profile.evidence);
         if (!validation.valid || !validation.assessment) {
           latestErrors = validation.errors;
@@ -85,7 +83,7 @@ export async function assessProfile(
             isError: true,
           };
         }
-        // Callout: This is the SDK output entering the application: a schema-validated assessment.
+        // Callout: Only a valid submit_assessment call sets accepted; prose alone cannot produce a result.
         accepted = validation.assessment;
         latestErrors = [];
         return { accepted: true, message: "Assessment validated." };
@@ -93,33 +91,33 @@ export async function assessProfile(
     },
   };
 
-  // Callout: This is where the application starts the Cursor SDK agent.
+  // Callout: Configure the Cursor SDK agent here; expose our two tools without shell, browser, or file tools.
   const agent = await Agent.create({
     apiKey: cursorApiKey,
     model: { id: cursorModel },
-    // Callout: The SDK custom-tool channel exposes only the two tools above; shell, browser, file, edit, and subagent tools are omitted.
+    // "mcp" is the SDK capability group required for these in-process custom tools.
     tools: ["mcp"],
     local: {
       cwd: process.cwd(),
-      // Callout: Empty setting sources prevent user or project configuration from adding capabilities.
+      // Do not load ambient settings, including user/project tool configuration.
       settingSources: [],
       customTools,
     },
   });
 
   try {
-    // Callout: Validation errors are returned to the same agent for one bounded repair attempt.
+    // Callout: At most two sends to this agent: initial assessment, then repair if no result was accepted.
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
       const prompt =
         attempt === 1
           ? buildAssessmentPrompt(profile, requestedSignals)
           : `The previous run did not produce an accepted submit_assessment call. Correct these errors and call submit_assessment now:\n${latestErrors.length ? latestErrors.join("\n") : "No valid structured submission was received."}`;
+      // Callout: Start the SDK run with this prompt; support/assessment-prompt.ts builds the initial instructions and excerpts.
       const run = await agent.send(prompt, {
-        // Callout: This identifies the repository, pinned commit, and logical assessment attempt.
         idempotencyKey: `${profile.repository.id}-${profile.commitSha}-${attempt}`,
       });
       const result = await run.wait();
-      // Callout: Return only the accepted structured result to 02-run-audit.ts for deterministic categorization.
+      // Callout: SDK output returns here to outcome in 02-run-audit.ts, only after an accepted submission.
       if (accepted) return { assessment: accepted, attempts: attempt };
       if (result.status === "error") {
         latestErrors = [result.error?.message ?? "Cursor SDK run failed"];

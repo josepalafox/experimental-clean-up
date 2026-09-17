@@ -10,7 +10,8 @@ import { validateFinalSignalSet } from "./06-validate-assessment.js";
 
 // Step 07: Applies deterministic policy after all five signals are resolved.
 
-// Callout: Policy stays in deterministic code rather than being delegated to the model.
+// Callout: Fixed policy: any unclear -> investigation; otherwise 4-5 weak/absent -> retirement review,
+// 2-3 -> investigation, 0-1 -> not surfaced. The model does not choose the category.
 export function categoryForSignals(signals: FinalSignal[]): {
   category: Category;
   weakOrAbsentCount: number;
@@ -34,7 +35,7 @@ export function categoryForSignals(signals: FinalSignal[]): {
   return { category: "not_surfaced", weakOrAbsentCount, reasonCodes: ["durable_stewardship_evidence"] };
 }
 
-// Callout: This merges deterministic absence, model judgment, and validation overrides.
+// Merge deterministic absence, incomplete-collection overrides, and accepted model results.
 export function buildFinalResult(
   profile: RepositoryProfile,
   modelAssessment: ModelAssessment,
@@ -58,7 +59,6 @@ export function buildFinalResult(
         decided_by: "profiler",
       };
     }
-    // Callout: Missing proof fails safely to investigation instead of becoming a false absence.
     if (inventory.searchStatus === "incomplete") {
       return {
         signal,
@@ -74,7 +74,6 @@ export function buildFinalResult(
 
   const finalErrors = validateFinalSignalSet(signals);
   if (finalErrors.length > 0) throw new Error(finalErrors.join("; "));
-  // Callout: Categorization happens only after the complete five-signal package validates.
   const category = categoryForSignals(signals);
   return {
     repository: profile.repository,
