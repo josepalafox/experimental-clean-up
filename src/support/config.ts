@@ -1,7 +1,7 @@
 // Supporting file: centralizes scope, credentials, and per-run safety limits.
 const DEMO_OWNER = "josepalafox";
 // Callout: A fixed model makes repeated assessment results meaningfully comparable.
-export const DEFAULT_CURSOR_MODEL = "composer-2.5";
+export const DEFAULT_CURSOR_MODEL = "grok-4.6";
 
 // Callout: This hard boundary keeps the demo inside one public namespace.
 // Enterprise adaptation point: replace this fixed owner with an approved

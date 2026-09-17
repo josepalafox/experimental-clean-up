@@ -41,7 +41,7 @@ jobs:
       MAX_ASSESSMENTS: ${{ inputs.max_assessments }}
       CREATE_TRACKING_ISSUE: ${{ inputs.create_tracking_issue }}
       # Callout: Pin one model so assessment comparisons are not affected by automatic routing.
-      CURSOR_MODEL: composer-2.5
+      CURSOR_MODEL: grok-4.6
       CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
       # Callout: GitHub supplies this token automatically for the current workflow run.
       GITHUB_TOKEN: ${{ github.token }}
