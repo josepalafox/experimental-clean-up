@@ -55,8 +55,8 @@ async function main(): Promise<void> {
         config.cursorModel,
         requestedSignals,
       );
-      // 05-assess-with-cursor.ts returns only an assessment already validated by 06-validate-assessment.ts.
-      // 07-categorize-results.ts merges deterministic and model results into the final category.
+      // Callout: This receives the SDK's only accepted output; free-form agent prose never reaches this orchestrator.
+      // 07-categorize-results.ts merges that assessment with deterministic profiling into the final category.
       results.push(buildFinalResult(profile, outcome.assessment, outcome.attempts));
     } catch (error) {
       errors.push({ repository: repository.fullName, error: errorMessage(error) });
