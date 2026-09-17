@@ -1,5 +1,7 @@
 // Supporting file: centralizes scope, credentials, and per-run safety limits.
 const DEMO_OWNER = "josepalafox";
+// Callout: A fixed model makes repeated assessment results meaningfully comparable.
+export const DEFAULT_CURSOR_MODEL = "composer-2.5";
 
 // Callout: This hard boundary keeps the demo inside one public namespace.
 // Enterprise adaptation point: replace this fixed owner with an approved
@@ -47,7 +49,7 @@ export function loadConfig(): Config {
     maxRequests: integerFromEnv("MAX_GITHUB_REQUESTS", 500),
     auditMode,
     ...(cursorApiKey ? { cursorApiKey } : {}),
-    cursorModel: process.env.CURSOR_MODEL ?? "auto",
+    cursorModel: process.env.CURSOR_MODEL ?? DEFAULT_CURSOR_MODEL,
     ...(process.env.GITHUB_TOKEN ? { githubToken: process.env.GITHUB_TOKEN } : {}),
     createTrackingIssue: process.env.CREATE_TRACKING_ISSUE === "true",
   };

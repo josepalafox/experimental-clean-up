@@ -96,7 +96,7 @@ export async function assessProfile(
   const agent = await Agent.create({
     apiKey: cursorApiKey,
     model: { id: cursorModel },
-    // Callout: MCP enables only the custom tools; shell, browser, file, edit, and subagent tools are omitted.
+    // Callout: The SDK custom-tool channel exposes only the two tools above; shell, browser, file, edit, and subagent tools are omitted.
     tools: ["mcp"],
     local: {
       cwd: process.cwd(),
