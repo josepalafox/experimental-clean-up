@@ -48,15 +48,14 @@ async function main(): Promise<void> {
       assessmentsStarted += 1;
       // Determine which signals still need model judgment.
       const requestedSignals = unresolvedSignals(profile);
-      // Callout: Hand the bounded profile and unresolved signals to 05-assess-with-cursor.ts and the Cursor SDK.
+      // Callout: Receive the SDK's only accepted output as outcome; free-form agent prose never reaches this orchestrator.
       const outcome = await assessProfile(
         profile,
         config.cursorApiKey!,
         config.cursorModel,
         requestedSignals,
       );
-      // Callout: This receives the SDK's only accepted output; free-form agent prose never reaches this orchestrator.
-      // 07-categorize-results.ts merges that assessment with deterministic profiling into the final category.
+      // Callout: 07-categorize-results.ts merges the accepted assessment with deterministic profiling into the final category.
       results.push(buildFinalResult(profile, outcome.assessment, outcome.attempts));
     } catch (error) {
       errors.push({ repository: repository.fullName, error: errorMessage(error) });
