@@ -65,6 +65,18 @@ The workflow is manually triggered. Add `CURSOR_API_KEY` as a repository secret 
 
 The checked-in schedule is intentionally commented out. It can be enabled after the signal quality and operating cost are understood.
 
+## Bugbot
+
+Pull request review rules for this repository live in `.cursor/BUGBOT.md`. They tell Bugbot to flag writes to scanned repositories, a wider assessment-agent sandbox, model-chosen categories, published file contents, leaked credentials, and workflow permissions beyond the read-only audit.
+
+Turning reviews on is a dashboard step:
+
+1. Open [cursor.com/dashboard](https://cursor.com/dashboard) → **Integrations** and connect GitHub, granting the Cursor GitHub app access to `josepalafox/experimental-clean-up`.
+2. Open **Bugbot in Automations** and enable this repository.
+3. For an experimental repo, set **Run only when mentioned** so a review starts when someone comments `bugbot run` on a pull request.
+
+On an individual plan, automatic reviews run only on pull requests you author. Comment `bugbot run verbose=true` to see which rules a review used.
+
 ## Categories
 
 | Rule | Category |
