@@ -3,8 +3,8 @@ name: demo-feature
 description: >-
   Live demo slash command. Files one feature issue, pauses, then implements
   that feature, lets Bugbot review it, and fixes the finding in the same run.
-  Can reset so the same demo can be run again. Use only when the user invokes
-  /demo-feature.
+  Close the demo only when the user invokes /demo-feature close. Use only when
+  the user invokes /demo-feature.
 disable-model-invocation: true
 icon: bug
 color: orange
@@ -22,13 +22,15 @@ Look at the text after `/demo-feature`:
 
 - `continue` runs **Implement**.
 - `fix` runs **Fix**.
-- Anything else, including `/demo-feature` alone, runs **File the issue**. That stage always resets a previous demo first.
+- `close` runs **Close**.
+- Anything else, including `/demo-feature` alone, runs **File the issue**. Do not close a previous issue or pull request in this stage.
 
 ## File the issue
 
-1. Run `bash .cursor/skills/demo-feature/scripts/reset-demo.sh` from the repository root. If it prints `closed-pr` or `closed-issue`, mention that in one sentence. If it prints `nothing-open`, do not mention a reset.
-2. Create a GitHub issue with `gh issue create` on `josepalafox/experimental-clean-up`. Use the title and body from the reference file exactly. The issue must not mention workflow permissions, Bugbot, or a deliberate mistake.
-3. Stop. Reply with the issue URL, one sentence naming the feature, and this next step, verbatim: `Type /demo-feature continue when you want me to implement it, open the pull request, and fix the finding after Bugbot reviews.`
+1. Create a GitHub issue with `gh issue create` on `josepalafox/experimental-clean-up`. Use the title and body from the reference file exactly. The issue must not mention workflow permissions, Bugbot, a deliberate mistake, or a previous demo.
+2. Stop. Reply with the issue URL, one sentence naming the feature, and this next step, verbatim: `Type /demo-feature continue when you want me to implement it, open the pull request, and fix the finding after Bugbot reviews.`
+
+Do not mention a previous issue, pull request, or cleanup. The start of the demo stays clean.
 
 Do not create a branch, edit code, or open a pull request in this stage.
 
@@ -52,6 +54,12 @@ Do not create a branch, edit code, or open a pull request in this stage.
 2. Run `npm test`.
 3. Commit and push to the same branch. The commit message is `Keep the audit workflow token read-only`.
 4. Comment on the pull request, in this order: `Bugbot flagged the workflow token. Restored contents: read.` Then comment `bugbot run`.
-5. Stop. Reply with the pull request URL and say the comments show the implementation, Bugbot's review, and the follow-up fix. End with this next step, verbatim: `Type /demo-feature to close this pull request and run the demo from the beginning.`
+5. Stop. Reply with the pull request URL and say the comments show the implementation, Bugbot's review, and the follow-up fix. End with this next step, verbatim: `Type /demo-feature close to close this pull request and issue.`
 
-Do not merge the pull request.
+Do not merge the pull request. Do not close it in this stage.
+
+## Close
+
+1. Run `bash .cursor/skills/demo-feature/scripts/reset-demo.sh` from the repository root.
+2. Do not comment on the pull request or the issue. The comment thread stays the implementation, the Bugbot review, and the fix.
+3. Stop. If the script printed `closed-pr` or `closed-issue`, name what was closed. If it printed `nothing-open`, say there is nothing left to close. End with this next step, verbatim: `Type /demo-feature to start a new run.`

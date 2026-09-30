@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Close the previous live-demo issue and pull request so /demo-feature can start over.
+# Close the live-demo issue and pull request. Used only by /demo-feature close.
+# Do not add a comment. The pull request thread is the demo.
 set -euo pipefail
 
 REPO="josepalafox/experimental-clean-up"
@@ -9,7 +10,7 @@ closed_any=0
 
 pr_numbers="$(gh pr list --repo "$REPO" --head "$BRANCH" --state open --json number --jq '.[].number')"
 for number in $pr_numbers; do
-  gh pr close "$number" --repo "$REPO" --delete-branch --comment "Resetting the live demo so it can be run again."
+  gh pr close "$number" --repo "$REPO" --delete-branch
   echo "closed-pr $number"
   closed_any=1
 done
@@ -25,7 +26,7 @@ issue_numbers="$(
     --jq ".[] | select(.title == \"$TITLE\") | .number"
 )"
 for number in $issue_numbers; do
-  gh issue close "$number" --repo "$REPO" --comment "Resetting the live demo so it can be run again."
+  gh issue close "$number" --repo "$REPO"
   echo "closed-issue $number"
   closed_any=1
 done
