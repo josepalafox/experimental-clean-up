@@ -30,7 +30,7 @@ on:
 
 # Callout: The default token stays read-only. Add `issues: write` before enabling the tracking-issue input.
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   audit:
