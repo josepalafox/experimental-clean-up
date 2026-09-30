@@ -79,15 +79,17 @@ On an individual plan, automatic reviews run only on pull requests you author. C
 
 ## Live demo
 
-Type `/demo-feature` in Agent chat. The agent files one GitHub issue and stops. The chat then tells you the next prompt to send:
+Type `/demo-feature` in Agent chat. Each prompt is one step, and the chat tells you the next one:
 
-1. `/demo-feature` files a short issue. It does not close or mention a previous run.
-2. `/demo-feature plan` writes a technical implementation plan on that issue and stops.
-3. `/demo-feature continue` implements that plan, opens a pull request, asks Bugbot to review it, and after the finding lands restores the read-only workflow token and asks Bugbot to review again.
-4. `/demo-feature fix` repeats only that correction if the review did not finish during `continue`.
-5. `/demo-feature close` closes the demo pull request and issue without commenting on them.
+1. `/demo-feature` files the feature request.
+2. `/demo-feature plan` has Cursor write the technical plan on the issue.
+3. `/demo-feature implement` has Cursor implement that plan.
+4. `/demo-feature pr` opens the pull request.
+5. `/demo-feature review` asks Bugbot to review it.
+6. `/demo-feature autofix` waits for Bugbot Autofix to fix the finding.
+7. `/demo-feature close` closes the pull request and issue without commenting on them.
 
-The implementation includes one deliberate mistake so Bugbot has a finding to show. Do not merge the demo pull request. Close it with `/demo-feature close` before starting again.
+Bugbot Autofix has to be enabled in the [Bugbot dashboard](https://www.cursor.com/dashboard/bugbot) and set to commit to the existing branch. Do not merge the demo pull request.
 
 ## Categories
 

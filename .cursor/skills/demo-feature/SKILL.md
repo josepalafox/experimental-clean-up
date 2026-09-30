@@ -1,10 +1,9 @@
 ---
 name: demo-feature
 description: >-
-  Live demo slash command. Files a short feature issue, pauses for a technical
-  plan, then implements that plan, lets Bugbot review it, and fixes the finding.
-  Close the demo only when the user invokes /demo-feature close. Use only when
-  the user invokes /demo-feature.
+  Live demo prompts for a normal feature workflow: request, plan, implement,
+  pull request, Bugbot review, Bugbot Autofix, and close. Use only when the
+  user invokes /demo-feature.
 disable-model-invocation: true
 icon: bug
 color: orange
@@ -12,66 +11,77 @@ color: orange
 
 # Demo feature
 
-This is a live, repeatable demo of issue → plan → implement → Bugbot → fix. Follow one stage per user message, then stop. Do not start the next stage in the same turn.
+These prompts are the presenter's controls. Each one runs one visible step and stops. Do not start the next step in the same turn.
 
-Read `.cursor/skills/demo-feature/references/feature.md` before editing anything. That file is the feature, the planted mistake, and the fix. Do not invent a different feature or a different mistake.
+The audience should see a normal request: the user asks for a feature, Cursor plans it, Cursor implements it, Cursor opens a pull request, Bugbot reviews it, and Bugbot Autofix fixes it. Do not describe this skill, a planted mistake, or a scripted plan in GitHub issues, pull requests, commits, or the chat reply.
 
-## Which stage
+Read `.cursor/skills/demo-feature/references/feature.md` before planning, editing, or opening the pull request.
+
+## Which step
 
 Look at the text after `/demo-feature`:
 
 - `plan` runs **Plan**.
-- `continue` runs **Implement**.
-- `fix` runs **Fix**.
+- `implement` runs **Implement**.
+- `pr` runs **Open the pull request**.
+- `review` runs **Review**.
+- `autofix` runs **Autofix**.
 - `close` runs **Close**.
-- Anything else, including `/demo-feature` alone, runs **File the issue**. Do not close a previous issue or pull request in this stage.
+- Anything else, including `/demo-feature` alone, runs **Request**.
 
-## File the issue
+## Request
 
-1. Create a GitHub issue with `gh issue create` on `josepalafox/experimental-clean-up`. Use the generic issue title and body from the reference file exactly. The issue must not mention workflow permissions, Bugbot, a deliberate mistake, a technical plan, or a previous demo.
-2. Stop. Reply with the issue URL, one sentence naming the feature, and this next step, verbatim: `Type /demo-feature plan when you want a technical implementation plan for this issue.`
+1. Create a GitHub issue with `gh issue create` on `josepalafox/experimental-clean-up`. Use the issue title and body from the reference file.
+2. Stop. Reply with the issue URL and one sentence that restates the request. End with this next step, verbatim: `Type /demo-feature plan to plan the implementation.`
 
-Do not mention a previous issue, pull request, or cleanup. The start of the demo stays clean.
-
-Do not create a branch, edit code, write the plan, or open a pull request in this stage.
+Do not mention a previous run. Do not plan, edit code, or open a pull request.
 
 ## Plan
 
-1. Find the latest open issue in `josepalafox/experimental-clean-up` whose title is exactly `Show the audit mode on the cleanup report`.
-2. Comment on that issue with `gh issue comment`. Use the technical plan from the reference file exactly. The plan must not mention Bugbot or a deliberate mistake.
-3. If the comment fails, include the same plan in the reply. Do not invent a different plan.
-4. Stop. In one or two sentences, say the plan covers where the mode is printed and that a test will check it. End with this next step, verbatim: `Type /demo-feature continue when you want me to implement that plan, open the pull request, and fix the finding after Bugbot reviews.`
+1. Read the latest open issue whose title is exactly `Show the audit mode on the cleanup report`.
+2. Write the technical plan yourself from that issue. Post it as a comment on the issue with `gh issue comment`, and show the same plan in the chat. Name the report functions, the mode line, and the test. Do not copy a prepared plan from the reference file.
+3. Stop. End with this next step, verbatim: `Type /demo-feature implement to build the plan.`
 
-Do not create a branch, edit code, or open a pull request in this stage.
+Do not edit code or open a pull request. Do not mention workflow permissions.
 
 ## Implement
 
-Implement the technical plan from the reference file. The planted mistake in that file is still required.
-
-1. Start from a clean `origin/main`. If `git status --porcelain` is not empty, stop and ask the user to stash or commit before the demo continues. Do not carry unrelated files into the demo branch.
+1. Start from a clean `origin/main`. If `git status --porcelain` is not empty, stop and ask the user to stash or commit first.
 2. `git fetch origin main` and `git checkout -B demo/show-audit-mode origin/main`.
-3. Make the report change, the test change, and the single permission edit specified in the reference file. The permission edit is required. The demo has failed if the pull request does not change `contents: read` to `contents: write`.
-4. Run `npm test`. Do not open the pull request if tests fail.
-5. Commit only the report, the audit runner, the test, and the workflow file. The commit message and the pull request title and body describe the mode line only. Do not mention the permission change, Bugbot, or a deliberate mistake.
-6. Push `demo/show-audit-mode` and open a pull request into `main` with `gh pr create`. Do not pass `--draft`. If the pull request is a draft, run `gh pr ready`.
-7. Confirm `gh pr diff` contains `contents: write` and the `Mode:` report line. If `contents: write` is missing, add it and push before asking Bugbot to review.
-8. Comment `bugbot run` on the pull request. Tell the user the pull request URL and that you are waiting for Bugbot, then you will fix the finding in this same turn.
-9. Run `bash .cursor/skills/demo-feature/scripts/wait-for-bugbot.sh <pr-number>`.
-10. If the wait script exits without a comment, stop. Say that Bugbot has not commented yet, include the pull request URL, and give this next step, verbatim: `Type /demo-feature fix when you want me to correct that finding.`
-11. If Bugbot commented, run **Fix** in this same turn. Do not ask the user to type `/demo-feature fix`.
+3. Implement the plan you posted. The report must show the audit mode, and a test must cover it. Leave `.github/workflows/01-audit-trigger.yml` unchanged.
+4. Run `npm test`. Commit only the feature files. The commit message describes the mode line only.
+5. Push `demo/show-audit-mode`. Do not open a pull request.
+6. Stop. Say the implementation is committed and give the branch name. End with this next step, verbatim: `Type /demo-feature pr to open the pull request.`
 
-## Fix
+## Open the pull request
 
-1. Check out `demo/show-audit-mode`. Change workflow `contents: write` back to `contents: read` and change nothing else.
-2. Run `npm test`.
-3. Commit and push to the same branch. The commit message is `Keep the audit workflow token read-only`.
-4. Comment on the pull request, in this order: `Bugbot flagged the workflow token. Restored contents: read.` Then comment `bugbot run`.
-5. Stop. Reply with the pull request URL and say the comments show the implementation, Bugbot's review, and the follow-up fix. End with this next step, verbatim: `Type /demo-feature close to close this pull request and issue.`
+1. Check out `demo/show-audit-mode`.
+2. Make the standalone workflow edit in the reference file. It must be its own commit, after the feature commit. Push it.
+3. Open a pull request into `main` with `gh pr create`. Do not pass `--draft`. The title and body describe only the mode line and link the issue. If `gh pr create` fails, open the same ready-for-review pull request another way.
+4. Confirm the pull request diff contains both `Mode:` and `contents: write`, and that those changes are in different commits.
+5. Stop. Reply with only the pull request URL. Do not mention the workflow commit. End with this next step, verbatim: `Type /demo-feature review to have Bugbot review it.`
 
-Do not merge the pull request. Do not close it in this stage.
+Do not comment `bugbot run` in this step. Do not fix the workflow edit.
+
+## Review
+
+1. Comment `bugbot run` on the demo pull request.
+2. Run `bash .cursor/skills/demo-feature/scripts/wait-for-bugbot.sh <pr-number>`.
+3. Stop. If Bugbot commented, quote the finding title `Workflow permission wider than the read-only audit` and give the pull request URL. End with this next step, verbatim: `Type /demo-feature autofix to have Bugbot Autofix fix it.`
+4. If Bugbot has not commented, say so, include the pull request URL, and give that same next step.
+
+Do not edit the code.
+
+## Autofix
+
+Bugbot Autofix is a Cloud Agent that Bugbot starts. Do not edit the workflow file yourself and do not push a fix commit.
+
+1. Run `bash .cursor/skills/demo-feature/scripts/wait-for-autofix.sh <pr-number>`.
+2. If it prints `autofix-started`, stop. Give the pull request URL and say Bugbot Autofix is fixing the finding. End with this next step, verbatim: `Type /demo-feature close when you are ready to tear this run down.`
+3. If it prints `autofix-not-started`, stop. Say that Bugbot Autofix did not start, and that it has to be enabled in the Bugbot dashboard and set to commit to the existing branch. Do not fix the code. End with the same `/demo-feature close` sentence.
 
 ## Close
 
 1. Run `bash .cursor/skills/demo-feature/scripts/reset-demo.sh` from the repository root.
-2. Do not comment on the pull request or the issue. The comment thread stays the implementation, the Bugbot review, and the fix.
-3. Stop. If the script printed `closed-pr` or `closed-issue`, name what was closed. If it printed `nothing-open`, say there is nothing left to close. End with this next step, verbatim: `Type /demo-feature to start a new run.`
+2. Do not comment on the pull request or the issue.
+3. Stop. Name what was closed, or say there is nothing left to close. End with this next step, verbatim: `Type /demo-feature to start a new run.`
