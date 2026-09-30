@@ -1,9 +1,9 @@
 ---
 name: demo-feature
 description: >-
-  Live demo slash command. Files one feature issue, pauses, implements that
-  feature with a deliberate Bugbot finding, pauses for the fix, and can reset
-  so the same demo can be run again. Use only when the user invokes
+  Live demo slash command. Files one feature issue, pauses, then implements
+  that feature, lets Bugbot review it, and fixes the finding in the same run.
+  Can reset so the same demo can be run again. Use only when the user invokes
   /demo-feature.
 disable-model-invocation: true
 icon: bug
@@ -28,7 +28,7 @@ Look at the text after `/demo-feature`:
 
 1. Run `bash .cursor/skills/demo-feature/scripts/reset-demo.sh` from the repository root. If it prints `closed-pr` or `closed-issue`, mention that in one sentence. If it prints `nothing-open`, do not mention a reset.
 2. Create a GitHub issue with `gh issue create` on `josepalafox/experimental-clean-up`. Use the title and body from the reference file exactly. The issue must not mention workflow permissions, Bugbot, or a deliberate mistake.
-3. Stop. Reply with the issue URL, one sentence naming the feature, and this next step, verbatim: `Type /demo-feature continue when you want me to implement it and open the pull request.`
+3. Stop. Reply with the issue URL, one sentence naming the feature, and this next step, verbatim: `Type /demo-feature continue when you want me to implement it, open the pull request, and fix the finding after Bugbot reviews.`
 
 Do not create a branch, edit code, or open a pull request in this stage.
 
@@ -41,16 +41,17 @@ Do not create a branch, edit code, or open a pull request in this stage.
 5. Commit only the report, the audit runner, the test, and the workflow file. The commit message and the pull request title and body describe the mode line only. Do not mention the permission change, Bugbot, or a deliberate mistake.
 6. Push `demo/show-audit-mode` and open a pull request into `main` with `gh pr create`. Do not pass `--draft`. If the pull request is a draft, run `gh pr ready`.
 7. Confirm `gh pr diff` contains `contents: write` and the `Mode:` report line. If `contents: write` is missing, add it and push before asking Bugbot to review.
-8. Comment `bugbot run` on the pull request. Tell the user the pull request URL and that you are waiting for Bugbot before the next prompt.
+8. Comment `bugbot run` on the pull request. Tell the user the pull request URL and that you are waiting for Bugbot, then you will fix the finding in this same turn.
 9. Run `bash .cursor/skills/demo-feature/scripts/wait-for-bugbot.sh <pr-number>`.
-10. Stop. If Bugbot commented, reply with the pull request URL, quote the finding title `Workflow permission wider than the read-only audit`, and this next step, verbatim: `Type /demo-feature fix when you want me to correct that finding.` If the wait script exits without a comment, say that Bugbot has not commented yet, include the pull request URL, and still give that same `/demo-feature fix` prompt. Do not fix the finding in this turn.
+10. If the wait script exits without a comment, stop. Say that Bugbot has not commented yet, include the pull request URL, and give this next step, verbatim: `Type /demo-feature fix when you want me to correct that finding.`
+11. If Bugbot commented, run **Fix** in this same turn. Do not ask the user to type `/demo-feature fix`.
 
 ## Fix
 
 1. Check out `demo/show-audit-mode`. Change workflow `contents: write` back to `contents: read` and change nothing else.
 2. Run `npm test`.
 3. Commit and push to the same branch. The commit message is `Keep the audit workflow token read-only`.
-4. Comment `bugbot run` on the same pull request.
-5. Stop. Reply with the pull request URL and say that `contents: read` is restored and Bugbot is reviewing again. End with this next step, verbatim: `Type /demo-feature to close this pull request and run the demo from the beginning.`
+4. Comment on the pull request, in this order: `Bugbot flagged the workflow token. Restored contents: read.` Then comment `bugbot run`.
+5. Stop. Reply with the pull request URL and say the comments show the implementation, Bugbot's review, and the follow-up fix. End with this next step, verbatim: `Type /demo-feature to close this pull request and run the demo from the beginning.`
 
 Do not merge the pull request.

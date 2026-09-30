@@ -82,8 +82,8 @@ On an individual plan, automatic reviews run only on pull requests you author. C
 Type `/demo-feature` in Agent chat. The agent files one GitHub issue and stops. The chat then tells you the next prompt to send:
 
 1. `/demo-feature` files the issue.
-2. `/demo-feature continue` implements that issue, opens a pull request that is ready for review, and asks Bugbot to review it.
-3. `/demo-feature fix` corrects the finding Bugbot leaves and asks Bugbot to review again.
+2. `/demo-feature continue` implements that issue, opens a pull request, asks Bugbot to review it, and after the finding lands restores the read-only workflow token and asks Bugbot to review again.
+3. `/demo-feature fix` repeats only that correction if the review did not finish during `continue`.
 
 The implementation includes one deliberate mistake so Bugbot has a finding to show. Do not merge the demo pull request. Type `/demo-feature` again to close that pull request and issue and start from a new issue.
 
