@@ -77,6 +77,16 @@ Turning reviews on is a dashboard step:
 
 On an individual plan, automatic reviews run only on pull requests you author. Comment `bugbot run verbose=true` to see which rules a review used.
 
+## Live demo
+
+Type `/demo-feature` in Agent chat. The agent files one GitHub issue and stops. The chat then tells you the next prompt to send:
+
+1. `/demo-feature` files the issue.
+2. `/demo-feature continue` implements that issue, opens a pull request that is ready for review, and asks Bugbot to review it.
+3. `/demo-feature fix` corrects the finding Bugbot leaves and asks Bugbot to review again.
+
+The implementation includes one deliberate mistake so Bugbot has a finding to show. Do not merge the demo pull request. Type `/demo-feature` again to close that pull request and issue and start from a new issue.
+
 ## Categories
 
 | Rule | Category |

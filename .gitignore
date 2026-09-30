@@ -2,6 +2,8 @@ node_modules/
 dist/
 .cursor/*
 !.cursor/BUGBOT.md
+!.cursor/skills/
+!.cursor/skills/**
 reports/
 .env
 .env.*
