@@ -1,8 +1,8 @@
 ---
 name: demo-feature
 description: >-
-  Live demo slash command. Files one feature issue, pauses, then implements
-  that feature, lets Bugbot review it, and fixes the finding in the same run.
+  Live demo slash command. Files a short feature issue, pauses for a technical
+  plan, then implements that plan, lets Bugbot review it, and fixes the finding.
   Close the demo only when the user invokes /demo-feature close. Use only when
   the user invokes /demo-feature.
 disable-model-invocation: true
@@ -12,7 +12,7 @@ color: orange
 
 # Demo feature
 
-This is a live, repeatable demo of issue → implement → Bugbot → fix. Follow one stage per user message, then stop. Do not start the next stage in the same turn.
+This is a live, repeatable demo of issue → plan → implement → Bugbot → fix. Follow one stage per user message, then stop. Do not start the next stage in the same turn.
 
 Read `.cursor/skills/demo-feature/references/feature.md` before editing anything. That file is the feature, the planted mistake, and the fix. Do not invent a different feature or a different mistake.
 
@@ -20,6 +20,7 @@ Read `.cursor/skills/demo-feature/references/feature.md` before editing anything
 
 Look at the text after `/demo-feature`:
 
+- `plan` runs **Plan**.
 - `continue` runs **Implement**.
 - `fix` runs **Fix**.
 - `close` runs **Close**.
@@ -27,14 +28,25 @@ Look at the text after `/demo-feature`:
 
 ## File the issue
 
-1. Create a GitHub issue with `gh issue create` on `josepalafox/experimental-clean-up`. Use the title and body from the reference file exactly. The issue must not mention workflow permissions, Bugbot, a deliberate mistake, or a previous demo.
-2. Stop. Reply with the issue URL, one sentence naming the feature, and this next step, verbatim: `Type /demo-feature continue when you want me to implement it, open the pull request, and fix the finding after Bugbot reviews.`
+1. Create a GitHub issue with `gh issue create` on `josepalafox/experimental-clean-up`. Use the generic issue title and body from the reference file exactly. The issue must not mention workflow permissions, Bugbot, a deliberate mistake, a technical plan, or a previous demo.
+2. Stop. Reply with the issue URL, one sentence naming the feature, and this next step, verbatim: `Type /demo-feature plan when you want a technical implementation plan for this issue.`
 
 Do not mention a previous issue, pull request, or cleanup. The start of the demo stays clean.
+
+Do not create a branch, edit code, write the plan, or open a pull request in this stage.
+
+## Plan
+
+1. Find the latest open issue in `josepalafox/experimental-clean-up` whose title is exactly `Show the audit mode on the cleanup report`.
+2. Comment on that issue with `gh issue comment`. Use the technical plan from the reference file exactly. The plan must not mention Bugbot or a deliberate mistake.
+3. If the comment fails, include the same plan in the reply. Do not invent a different plan.
+4. Stop. In one or two sentences, say the plan covers where the mode is printed and that a test will check it. End with this next step, verbatim: `Type /demo-feature continue when you want me to implement that plan, open the pull request, and fix the finding after Bugbot reviews.`
 
 Do not create a branch, edit code, or open a pull request in this stage.
 
 ## Implement
+
+Implement the technical plan from the reference file. The planted mistake in that file is still required.
 
 1. Start from a clean `origin/main`. If `git status --porcelain` is not empty, stop and ask the user to stash or commit before the demo continues. Do not carry unrelated files into the demo branch.
 2. `git fetch origin main` and `git checkout -B demo/show-audit-mode origin/main`.

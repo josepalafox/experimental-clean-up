@@ -6,7 +6,7 @@ Branch: `demo/show-audit-mode`
 
 Base: `origin/main`
 
-## Issue
+## Generic issue
 
 Title:
 
@@ -17,15 +17,22 @@ Show the audit mode on the cleanup report
 Body:
 
 ```markdown
-## User story
+Operators reading a cleanup report cannot tell whether it came from a profile run or an assessment run. Add the run mode to the report.
+```
 
-As an operator reading an Experimental Clean-up report, I want the run mode printed at the top, so I can tell a profile run from an assessment run without opening the workflow logs.
+## Technical plan
 
-## Scope
+Post this as a comment on the generic issue. Do not include it in the issue body.
 
-- Print `Mode: profile` or `Mode: assess` near the top of the Markdown report.
-- Cover the profile summary and the assessment report.
-- Add a test that the rendered report contains the mode.
+```markdown
+## Technical plan
+
+Print the audit mode at the top of the Markdown report.
+
+- `renderProfileSummary` takes the mode and prints `Mode: profile` or `Mode: assess` after the generated timestamp.
+- `renderAuditReport` prints `Mode:` from the summary after the generated timestamp.
+- The profile run passes `"profile"` from `src/02-run-audit.ts`.
+- A test checks that the assessment report contains `Mode: assess` and the profile summary contains `Mode: profile`.
 
 ## Out of scope
 
