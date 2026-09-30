@@ -61,7 +61,7 @@ async function main(): Promise<void> {
 
   await mkdir("reports", { recursive: true });
   if (config.auditMode === "profile") {
-    const report = renderProfileSummary(publishedProfiles, repositories.length);
+    const report = renderProfileSummary(publishedProfiles, repositories.length, "profile");
     await writeFile("reports/latest.md", report, "utf8");
     await writeFile("reports/profiles.json", `${JSON.stringify(publishedProfiles, null, 2)}\n`, "utf8");
     await writeJobSummary(report);
