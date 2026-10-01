@@ -18,11 +18,11 @@ Body:
 Operators reading a cleanup report cannot tell whether it came from a profile run or an assessment run. Add the run mode to the report.
 ```
 
-## What the plan and @cursor implementation cover
+## What @cursor planning and implementation cover
 
-The plan is written by the agent from the issue. It is not pasted from this file.
+Do not write the plan locally. Comment `@cursor` and ask only for a technical plan on the issue.
 
-`@cursor` on the issue implements that plan and opens the feature pull request. That work must print the audit mode on the profile summary and the assessment report, and add a test for that line. It must not change `.github/workflows/01-audit-trigger.yml`.
+That plan should cover printing the audit mode on the profile summary and the assessment report, and adding a test for that line. The later implement comment asks `@cursor` to open the feature pull request. Neither step should change `.github/workflows/01-audit-trigger.yml`.
 
 ## Standalone commit after the Cursor pull request exists
 
