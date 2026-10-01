@@ -7,7 +7,7 @@ The output is an evidence-linked review list. It is not a deletion decision, and
 ## How it works
 
 1. Enumerate public, non-fork repositories owned by `josepalafox`.
-2. Select repositories with at least 14 days of inactivity after checking human commits, releases, issue activity, and security-issue closure.
+2. Select repositories with at least 14 days of inactivity, or the inactivity window chosen for that run, after checking human commits, releases, issue activity, and security-issue closure.
 3. Inventory relevant files and prefetch their contents at a pinned commit.
 4. Give a Cursor SDK agent access only to two in-process tools:
    - `request_evidence` returns selected items from the prefetched bundle.
@@ -53,7 +53,7 @@ Useful settings:
 
 | Variable | Default | Purpose |
 |---|---:|---|
-| `INACTIVITY_DAYS` | `14` | Human-inactivity threshold |
+| `INACTIVITY_DAYS` | `14` | Human-inactivity threshold. The workflow `inactivity_days` input sets this variable |
 | `MAX_ASSESSMENTS` | `10` | Per-run model assessment cap |
 | `MAX_GITHUB_REQUESTS` | `500` | Hard GitHub request budget |
 | `CURSOR_MODEL` | `auto` | Cursor model selection |
@@ -61,7 +61,9 @@ Useful settings:
 
 ## GitHub Actions
 
-The workflow is manually triggered. Add `CURSOR_API_KEY` as a repository secret before choosing `assess`. GitHub automatically supplies a read-only workflow token for public repository reads. Re-enable `issues: write` on the workflow before turning on the tracking-issue input.
+The workflow is manually triggered. **Run workflow** includes `inactivity_days`, which defaults to `14` and is passed to the audit as `INACTIVITY_DAYS`. Leave that input at 14 for the standard gate, or set a longer window such as 30 when a slow-moving organization should not be reviewed after 14 quiet days. A value that is not a positive integer fails the run through the configuration check instead of reverting to 14.
+
+Add `CURSOR_API_KEY` as a repository secret before choosing `assess`. GitHub automatically supplies a read-only workflow token for public repository reads. Re-enable `issues: write` on the workflow before turning on the tracking-issue input.
 
 The checked-in schedule is intentionally commented out. It can be enabled after the signal quality and operating cost are understood.
 
