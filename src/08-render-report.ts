@@ -2,11 +2,16 @@ import type { AuditSummary, EvidenceClaim, EvidenceItem, FinalResult, Repository
 
 // Step 08: Renders Markdown; file 02 writes the report and serializes the separate JSON artifact.
 
-export function renderProfileSummary(profiles: RepositoryProfile[], enumerated: number): string {
+export function renderProfileSummary(
+  profiles: RepositoryProfile[],
+  enumerated: number,
+  mode: "profile" | "assess",
+): string {
   const lines = [
     "# Experimental cleanup profile",
     "",
     `Generated: ${new Date().toISOString()}`,
+    `Mode: ${mode}`,
     `Repositories enumerated: ${enumerated}`,
     `Candidates selected: ${profiles.length}`,
     "",
@@ -64,6 +69,7 @@ export function renderAuditReport(summary: AuditSummary): string {
     "# Experimental cleanup review",
     "",
     `Generated: ${summary.generatedAt}`,
+    `Mode: ${summary.mode}`,
     `Repositories enumerated: ${summary.repositoriesEnumerated}`,
     `Candidates selected: ${summary.candidatesSelected}`,
     `Candidates assessed: ${summary.candidatesAssessed}`,
