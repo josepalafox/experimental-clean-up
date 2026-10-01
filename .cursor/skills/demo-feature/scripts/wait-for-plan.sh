@@ -25,7 +25,11 @@ for _ in $(seq 1 60); do
   )"
   if [[ -n "$found" && "$found" != "null" ]]; then
     echo "plan-ready"
-    python3 -c 'import json,sys; d=json.loads(sys.argv[1]); print(f"comment={d[\"id\"]} author={d[\"login\"]}"); print(d["body"][:800])' "$found"
+    ID="$(printf '%s' "$found" | python3 -c 'import json,sys; print(json.load(sys.stdin)["id"])')"
+    LOGIN="$(printf '%s' "$found" | python3 -c 'import json,sys; print(json.load(sys.stdin)["login"])')"
+    BODY="$(printf '%s' "$found" | python3 -c 'import json,sys; print(json.load(sys.stdin)["body"][:800])')"
+    echo "comment=${ID} author=${LOGIN}"
+    printf '%s\n' "$BODY"
     exit 0
   fi
   sleep 10
