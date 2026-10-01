@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-# Wait until the Cursor bot posts a new comment on the demo issue (the plan).
+# Wait until the Cursor bot posts a real plan comment on the demo issue.
+# Ignores the initial "Taking a look!" acknowledgement, including when that
+# same comment is later edited into the plan.
 set -euo pipefail
 
 if [[ $# -ne 1 ]]; then
@@ -10,28 +12,22 @@ fi
 REPO="josepalafox/experimental-clean-up"
 ISSUE="$1"
 
-existing_ids="$(
-  gh api --paginate "repos/${REPO}/issues/${ISSUE}/comments" \
-    --jq '.[].id' | sort -n | tr '\n' ' '
-)"
-
 for _ in $(seq 1 60); do
-  while IFS=$'\t' read -r id login body; do
-    [[ -z "${id:-}" ]] && continue
-    if [[ " ${existing_ids} " == *" ${id} "* ]]; then
-      continue
-    fi
-    login_lc="$(printf '%s' "$login" | tr '[:upper:]' '[:lower:]')"
-    if [[ "$login_lc" != "cursor" && "$login_lc" != "cursor[bot]" ]]; then
-      continue
-    fi
-    echo "plan-ready comment=${id} author=${login}"
-    printf '%s\n' "$body" | fold -s -w 100 | head -n 30
+  found="$(
+    gh api --paginate "repos/${REPO}/issues/${ISSUE}/comments" --jq '
+      [.[]
+        | select((.user.login | ascii_downcase) == "cursor" or (.user.login | ascii_downcase) == "cursor[bot]")
+        | select((.body | test("Taking a look!"; "i")) | not)
+        | select(.body | test("plan|Mode:|renderProfileSummary|renderAuditReport|Implementation"; "i"))
+        | {id, login: .user.login, body: .body}
+      ] | .[-1] // empty
+    '
+  )"
+  if [[ -n "$found" && "$found" != "null" ]]; then
+    echo "plan-ready"
+    python3 -c 'import json,sys; d=json.loads(sys.argv[1]); print(f"comment={d[\"id\"]} author={d[\"login\"]}"); print(d["body"][:800])' "$found"
     exit 0
-  done < <(
-    gh api --paginate "repos/${REPO}/issues/${ISSUE}/comments" \
-      --jq '.[] | [.id, .user.login, (.body | gsub("\t"; " ") | gsub("\n"; " "))] | @tsv'
-  )
+  fi
   sleep 10
 done
 
