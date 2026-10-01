@@ -82,7 +82,7 @@ On an individual plan, automatic reviews run only on pull requests you author. C
 Type `/demo-feature` in Agent chat once. That single run:
 
 1. Files the feature request and opens it in the browser.
-2. Comments the technical plan on the issue.
+2. Runs a visible local plan step (`Running plan mode on issue #…`), then posts that plan on the issue.
 3. Comments `@cursor` on the issue so the Cursor bot implements the plan and opens the pull request.
 4. Asks Bugbot to review it and waits for Bugbot Autofix.
 
