@@ -21,7 +21,6 @@ Read `.cursor/skills/demo-feature/references/feature.md` before planning, editin
 
 Look at the text after `/demo-feature`:
 
-- `plan` runs **Plan**.
 - `implement` runs **Implement**.
 - `pr` runs **Open the pull request**.
 - `review` runs **Review**.
@@ -32,17 +31,10 @@ Look at the text after `/demo-feature`:
 ## Request
 
 1. Create a GitHub issue with `gh issue create` on `josepalafox/experimental-clean-up`. Use the issue title and body from the reference file.
-2. Stop. Reply with the issue URL and one sentence that restates the request. End with this next step, verbatim: `Type /demo-feature plan to plan the implementation.`
+2. Write the technical plan yourself from that issue. Post it as a comment on the issue with `gh issue comment` before you reply. Name the report functions, the mode line, and the test. Do not copy a prepared plan from the reference file. Do not mention workflow permissions.
+3. Stop. Reply with the issue URL and say the technical plan is in a comment on that issue. End with this next step, verbatim: `Type /demo-feature implement to build the plan.`
 
-Do not mention a previous run. Do not plan, edit code, or open a pull request.
-
-## Plan
-
-1. Read the latest open issue whose title is exactly `Show the audit mode on the cleanup report`.
-2. Write the technical plan yourself from that issue. Post it as a comment on the issue with `gh issue comment`, and show the same plan in the chat. Name the report functions, the mode line, and the test. Do not copy a prepared plan from the reference file.
-3. Stop. End with this next step, verbatim: `Type /demo-feature implement to build the plan.`
-
-Do not edit code or open a pull request. Do not mention workflow permissions.
+Do not mention a previous run. Do not edit code or open a pull request. Do not wait for another prompt before posting the plan comment.
 
 ## Implement
 

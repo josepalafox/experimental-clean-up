@@ -81,13 +81,12 @@ On an individual plan, automatic reviews run only on pull requests you author. C
 
 Type `/demo-feature` in Agent chat. Each prompt is one step, and the chat tells you the next one:
 
-1. `/demo-feature` files the feature request.
-2. `/demo-feature plan` has Cursor write the technical plan on the issue.
-3. `/demo-feature implement` has Cursor implement that plan.
-4. `/demo-feature pr` opens the pull request.
-5. `/demo-feature review` asks Bugbot to review it.
-6. `/demo-feature autofix` waits for Bugbot Autofix to fix the finding.
-7. `/demo-feature close` closes the pull request and issue without commenting on them.
+1. `/demo-feature` files the feature request and comments the technical plan on that issue.
+2. `/demo-feature implement` has Cursor implement that plan.
+3. `/demo-feature pr` opens the pull request.
+4. `/demo-feature review` asks Bugbot to review it.
+5. `/demo-feature autofix` waits for Bugbot Autofix to fix the finding.
+6. `/demo-feature close` closes the pull request and issue without commenting on them.
 
 Bugbot Autofix has to be enabled in the [Bugbot dashboard](https://www.cursor.com/dashboard/bugbot) and set to commit to the existing branch. Do not merge the demo pull request.
 
