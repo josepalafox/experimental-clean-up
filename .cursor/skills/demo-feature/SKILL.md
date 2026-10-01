@@ -1,9 +1,10 @@
 ---
 name: demo-feature
 description: >-
-  Live demo prompts for a normal feature workflow: request, plan, implement,
-  pull request, Bugbot review, Bugbot Autofix, and close. Use only when the
-  user invokes /demo-feature.
+  Live demo prompts for a normal feature workflow. Filing the request also
+  comments the technical plan on the issue. Then implement, pull request,
+  Bugbot review, Bugbot Autofix, and close. Use only when the user invokes
+  /demo-feature.
 disable-model-invocation: true
 icon: bug
 color: orange
