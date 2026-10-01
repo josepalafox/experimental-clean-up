@@ -22,6 +22,8 @@ Read `.cursor/skills/demo-feature/references/feature.md` before planning or touc
 
 Run every `gh` command with full local permissions so the user's GitHub keyring is used. Do not fall back to an integration token that cannot comment.
 
+Before the run, if Cursor keeps asking for approval cards, the presenter should set **Settings → Agents → Approvals & Execution → Run Mode** to **Run Everything** for the session. This repository also includes `.cursor/permissions.json` so Auto-review can allow the demo's `gh`, `git`, and workflow steps.
+
 ## Which step
 
 Look at the text after `/demo-feature`:

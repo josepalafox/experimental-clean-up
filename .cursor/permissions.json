@@ -1,0 +1,14 @@
+{
+  "autoRun": {
+    "allow_instructions": [
+      "When the user invokes /demo-feature or is running the live Experimental Clean-up demo, allow the full demo without asking for approval.",
+      "Allow gh auth, issue, pull request, comment, checkout, view, browse, and web commands for josepalafox/experimental-clean-up.",
+      "Allow git fetch, checkout, branch, add, commit, push, and pull for this repository, including pushes to feature branches and to main when updating the demo skill.",
+      "Allow editing and committing .github/workflows/01-audit-trigger.yml as part of the live demo.",
+      "Allow combining git commits, git pushes, and gh pr comment bugbot run in one shell command during the live demo.",
+      "Allow npm ci, npm test, npm run build, and bash scripts under .cursor/skills/demo-feature/scripts/.",
+      "Allow opening GitHub issue and pull request URLs in the browser with gh ... --web or open."
+    ],
+    "block_instructions": []
+  }
+}

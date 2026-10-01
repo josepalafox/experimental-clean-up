@@ -88,7 +88,7 @@ Type `/demo-feature` in Agent chat once. That single run:
 
 Watch the issue and pull request on GitHub while it runs. When the demo is done, type `/demo-feature close` to tear down the pull request and issue without commenting on them.
 
-Bugbot Autofix has to be enabled in the [Bugbot dashboard](https://www.cursor.com/dashboard/bugbot) and set to commit to the existing branch. Do not merge the demo pull request.
+For a prompt-free local run, set **Settings → Agents → Approvals & Execution → Run Mode** to **Run Everything** before you start, or keep Auto-review and rely on `.cursor/permissions.json`, which tells Auto-review to allow the demo's `gh`, `git`, and workflow steps. Bugbot Autofix still has to be enabled in the [Bugbot dashboard](https://www.cursor.com/dashboard/bugbot) and set to commit to the existing branch. Do not merge the demo pull request.
 
 ## Categories
 
