@@ -83,7 +83,7 @@ Type `/demo-feature` in Agent chat once. That single run:
 
 1. Files the feature request and opens it in the browser.
 2. Comments the technical plan on the issue.
-3. Implements the plan and opens the pull request.
+3. Comments `@cursor` on the issue so the Cursor bot implements the plan and opens the pull request.
 4. Asks Bugbot to review it and waits for Bugbot Autofix.
 
 Watch the issue and pull request on GitHub while it runs. When the demo is done, type `/demo-feature close` to tear down the pull request and issue without commenting on them.

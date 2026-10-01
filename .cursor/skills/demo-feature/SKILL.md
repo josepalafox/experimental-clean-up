@@ -1,9 +1,9 @@
 ---
 name: demo-feature
 description: >-
-  Live demo. One /demo-feature run files the issue, opens it, plans, implements,
-  opens the pull request, runs Bugbot, and waits for Bugbot Autofix with no
-  further prompts. /demo-feature close tears it down. Use only when the user
+  Live demo. One /demo-feature run files the issue, opens it, plans, asks
+  @cursor on GitHub to implement and open the PR, then runs Bugbot and waits
+  for Autofix. /demo-feature close tears it down. Use only when the user
   invokes /demo-feature.
 disable-model-invocation: true
 icon: bug
@@ -14,9 +14,11 @@ color: orange
 
 These prompts are the presenter's controls. `/demo-feature` alone runs the whole live demo in one turn. Do not stop and ask for the next command until Autofix has started or clearly failed. `/demo-feature close` is the only separate step.
 
-The audience should see a normal request on GitHub: the user asks for a feature, Cursor plans it, Cursor implements it, Cursor opens a pull request, Bugbot reviews it, and Bugbot Autofix fixes it. Do not describe this skill, a planted mistake, or a scripted plan in GitHub issues, pull requests, commits, or the chat reply.
+The audience should watch GitHub: the user asks for a feature, Cursor plans it, `@cursor` implements it and opens a pull request, Bugbot reviews it, and Bugbot Autofix fixes it. Do not describe this skill, a planted mistake, or a scripted plan in GitHub issues, pull requests, commits, or the chat reply.
 
-Read `.cursor/skills/demo-feature/references/feature.md` before planning, editing, or opening the pull request.
+Do **not** implement the feature on the local machine. Implementation and the feature pull request come from the Cursor GitHub bot after an `@cursor` issue comment.
+
+Read `.cursor/skills/demo-feature/references/feature.md` before planning or touching the pull request branch.
 
 Run every `gh` command with full local permissions so the user's GitHub keyring is used. Do not fall back to an integration token that cannot comment.
 
@@ -31,28 +33,26 @@ Look at the text after `/demo-feature`:
 
 Do all of the following in this turn, in order. Do not wait for another prompt between them.
 
-### 1. Request
+### 1. Request and plan
 
 1. Create a GitHub issue with `gh issue create` on `josepalafox/experimental-clean-up`. Use the issue title and body from the reference file.
-2. Open that issue in the browser with `gh issue view <number> --web` so the audience can watch it.
+2. Open that issue in the browser with `gh issue view <number> --web`.
 3. Write the technical plan yourself from that issue. Post it as a comment with `gh issue comment`. Name the report functions, the mode line, and the test. Do not copy a prepared plan from the reference file. Do not mention workflow permissions.
-4. Keep going. Do not stop here.
+4. Keep going.
 
-### 2. Implement
+### 2. Ask Cursor on GitHub to implement
 
-1. Start from a clean `origin/main`. If `git status --porcelain` is not empty, stop and ask the user to stash or commit first.
-2. `git fetch origin main` and `git checkout -B demo/show-audit-mode origin/main`.
-3. Implement the plan you posted. The report must show the audit mode, and a test must cover it. Leave `.github/workflows/01-audit-trigger.yml` unchanged.
-4. Run `npm test`. Commit only the feature files. The commit message describes the mode line only.
-5. Push `demo/show-audit-mode`. Keep going. Do not open the pull request yet.
+1. Comment on the same issue with `gh issue comment`. The body must start with `@cursor` and ask it to implement the technical plan above, open a ready-for-review pull request against `main`, and track this issue. Tell it not to change GitHub Actions workflow permissions. Do not implement the feature locally.
+2. Run `bash .cursor/skills/demo-feature/scripts/wait-for-pr.sh <issue-number>`.
+3. If no pull request appears, stop. Give the issue URL and say the Cursor bot did not open a pull request. End with: `Type /demo-feature close when you are ready to tear this run down.`
+4. Open the pull request in the browser with `gh pr view <number> --web`. Keep going.
 
-### 3. Open the pull request
+### 3. Prepare the review
 
-1. Make the standalone workflow edit in the reference file. It must be its own commit, after the feature commit. Push it.
-2. Open a pull request into `main` with `gh pr create`. Do not pass `--draft`. The title and body describe only the mode line and link the issue.
+1. Check out the pull request head branch with `gh pr checkout <number>`.
+2. Make only the standalone workflow edit from the reference file. Commit it alone and push to the pull request branch. Do not mention this commit in the chat.
 3. Confirm the pull request diff contains both `Mode:` and `contents: write`, and that those changes are in different commits.
-4. Open the pull request in the browser with `gh pr view <number> --web`.
-5. Keep going. Do not mention the workflow commit in the chat.
+4. Keep going.
 
 ### 4. Review
 
