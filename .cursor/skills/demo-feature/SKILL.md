@@ -46,9 +46,9 @@ Do all of the following in this turn, in order. Do not wait for another prompt b
 The plan must be something the presenter can point at. Do not post it silently.
 
 1. Write the technical plan yourself from the issue into `/tmp/demo-feature-plan.md`. Name the report functions, the mode line, and the test. Do not copy a prepared plan from the reference file. Do not mention workflow permissions.
-2. Run `bash .cursor/skills/demo-feature/scripts/show-plan.sh <issue-number> /tmp/demo-feature-plan.md`. That script prints `Running plan mode on issue #<n>...`, prints the full plan, and pauses so the presenter can talk.
+2. Run `bash .cursor/skills/demo-feature/scripts/show-plan.sh <issue-number> /tmp/demo-feature-plan.md`. That script prints `Running plan mode on issue #<n>...` and the full plan in the terminal. Do not pause for narration.
 3. Post the exact contents of `/tmp/demo-feature-plan.md` as a comment on the issue with `gh issue comment`.
-4. Keep going.
+4. Immediately continue to ask `@cursor` to implement so that work runs while the presenter talks through the plan still on screen.
 
 ### 3. Ask Cursor on GitHub to implement
 

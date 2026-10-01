@@ -19,8 +19,6 @@ cat "$PLAN_FILE"
 echo
 echo "════════════════════════════════════════════════════════"
 echo " Plan ready. Posting it to the issue, then asking @cursor"
-echo " to implement."
+echo " to implement while you talk through the plan above."
 echo "════════════════════════════════════════════════════════"
 echo
-# Give the presenter a beat to narrate before the next GitHub action.
-sleep 8
