@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { renderAuditReport } from "../src/08-render-report.js";
+import { renderAuditReport, renderProfileSummary } from "../src/08-render-report.js";
 import type { AuditSummary } from "../src/support/domain-types.js";
 
 // Callout: This test protects the direct file-line links that make each claim reviewable.
@@ -61,8 +61,16 @@ describe("renderAuditReport", () => {
       ],
     };
 
-    expect(renderAuditReport(summary)).toContain(
+    const report = renderAuditReport(summary);
+    expect(report).toContain(
       "[E-010](https://github.com/josepalafox/example/blob/abc123456789/README.md#L42-L58): README documents installation.",
     );
+    expect(report).toContain("Mode: assess");
+  });
+});
+
+describe("renderProfileSummary", () => {
+  it("prints the profile run mode under the generated timestamp", () => {
+    expect(renderProfileSummary([], 0, "profile")).toContain("Mode: profile");
   });
 });
