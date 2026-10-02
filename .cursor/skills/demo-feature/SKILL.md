@@ -46,7 +46,9 @@ Do all of the following in this turn, in order. Do not wait for another prompt b
 1. Comment on the issue with `gh issue comment`. The body must start with `@cursor` and ask only for a technical plan as a comment on this issue. Tell it to name the report functions, the `Mode` line, and the tests. Tell it explicitly: do not edit code, do not create a branch, and do not open a pull request.
 2. Run `bash .cursor/skills/demo-feature/scripts/wait-for-plan.sh <issue-number>`.
 3. If the wait script fails, stop. Give the issue URL and say the Cursor bot did not post a plan. End with: `Type /demo-feature close when you are ready to tear this run down.`
-4. Keep going once the plan comment from `cursor` is on the issue.
+4. Run `bash .cursor/skills/demo-feature/scripts/show-plan.sh <issue-number>`. Cursor edits its "Taking a look!" comment into the plan. The issue tab from step 1 does not show that edit, so this script reloads the issue on the plan comment and waits. Do not post the implement comment until the script prints `hold-complete`.
+5. If `show-plan.sh` fails, stop. Give the issue URL and say the plan comment is not on the issue. End with: `Type /demo-feature close when you are ready to tear this run down.`
+6. Keep going only after `hold-complete`.
 
 ### 3. Ask Cursor on GitHub to implement
 

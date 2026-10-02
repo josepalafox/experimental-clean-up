@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Wait until the Cursor bot posts a real plan comment on the demo issue.
-# Ignores the initial "Taking a look!" acknowledgement, including when that
-# same comment is later edited into the plan.
+# Wait until Cursor replaces its "Taking a look!" issue comment with the plan.
+# That edit happens once, after the cloud agent finishes, so poll that comment
+# directly and keep going through a failed GitHub API call.
 set -euo pipefail
 
 if [[ $# -ne 1 ]]; then
@@ -11,28 +11,47 @@ fi
 
 REPO="josepalafox/experimental-clean-up"
 ISSUE="$1"
+comment_id=""
 
-for _ in $(seq 1 60); do
-  found="$(
-    gh api --paginate "repos/${REPO}/issues/${ISSUE}/comments" --jq '
-      [.[]
-        | select((.user.login | ascii_downcase) == "cursor" or (.user.login | ascii_downcase) == "cursor[bot]")
-        | select((.body | test("Taking a look!"; "i")) | not)
-        | select(.body | test("plan|Mode:|renderProfileSummary|renderAuditReport|Implementation"; "i"))
-        | {id, login: .user.login, body: .body}
-      ] | .[-1] // empty
-    '
-  )"
-  if [[ -n "$found" && "$found" != "null" ]]; then
-    echo "plan-ready"
-    ID="$(printf '%s' "$found" | python3 -c 'import json,sys; print(json.load(sys.stdin)["id"])')"
-    LOGIN="$(printf '%s' "$found" | python3 -c 'import json,sys; print(json.load(sys.stdin)["login"])')"
-    BODY="$(printf '%s' "$found" | python3 -c 'import json,sys; print(json.load(sys.stdin)["body"][:800])')"
-    echo "comment=${ID} author=${LOGIN}"
-    printf '%s\n' "$BODY"
-    exit 0
+is_plan() {
+  local body="$1"
+  [[ "$body" != *"Taking a look!"* && "$body" != *"taking a look!"* ]] \
+    && [[ "$body" == *"renderProfileSummary"* ]] \
+    && [[ "$body" == *"renderAuditReport"* ]] \
+    && [[ "$body" == *"Mode:"* ]] \
+    && [[ "$body" == *[Tt]est* ]]
+}
+
+for _ in $(seq 1 90); do
+  if [[ -z "$comment_id" ]]; then
+    if ! listed="$(gh api "repos/${REPO}/issues/${ISSUE}/comments?per_page=100" --jq '.[] | select(.user.login=="cursor[bot]" or .user.login=="cursor") | .id' 2>&1)"; then
+      echo "api-error list-comments" >&2
+      printf '%s\n' "$listed" >&2
+      sleep 5
+      continue
+    fi
+    comment_id="$(printf '%s\n' "$listed" | awk 'NF { print; exit }')"
   fi
-  sleep 10
+
+  if [[ -n "$comment_id" ]]; then
+    if ! body="$(gh api "repos/${REPO}/issues/comments/${comment_id}" --jq '.body' 2>&1)"; then
+      echo "api-error comment=${comment_id}" >&2
+      printf '%s\n' "$body" >&2
+      sleep 5
+      continue
+    fi
+    if is_plan "$body"; then
+      echo "plan-ready"
+      echo "comment=${comment_id} author=cursor[bot]"
+      printf '%s\n' "$body" | head -c 800
+      printf '\n'
+      exit 0
+    fi
+    echo "ack-only comment=${comment_id}"
+  else
+    echo "plan-not-yet"
+  fi
+  sleep 5
 done
 
 echo "plan-not-yet" >&2
